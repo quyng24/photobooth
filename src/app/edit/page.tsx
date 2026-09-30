@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Palette, Wand2, ArrowRight } from "lucide-react";
 import { usePhotoStore } from "@/stores/photoStore";
-import { renderPhotoStrip } from "@/utils/lib/renderPhotoStrip";
+import { renderPhotoStrip } from "@/lib/renderPhotoStrip";
 
 const FRAME_STYLES = [
   { id: "pink", name: "Y2K Pink", bg: "bg-pink-300", text: "text-pink-900" },
@@ -145,7 +145,6 @@ export default function EditPage() {
               disabled={isExporting}
               className="w-full bg-cyan-400 hover:bg-cyan-300 text-black px-6 py-4 rounded-xl font-black text-lg border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2"
             >
-              HOÀN THÀNH & XUẤT ẢNH{" "}
               {isExporting ? "Đang xuất ảnh" : "Hoàn Thành & Xuất Ảnh"}
               <ArrowRight className="w-5 h-5" />
             </button>

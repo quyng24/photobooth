@@ -7,10 +7,10 @@ import { usePhotoStore } from "@/stores/photoStore";
 import { imageUrlToDataUrl } from "@/utils/utils";
 
 const SAMPLE_PHOTOS = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80",
+  "/images/image1.png",
+  "/images/image2.png",
+  "/images/image3.png",
+  "/images/image4.png",
 ];
 
 export default function CapturePage() {
@@ -52,7 +52,7 @@ export default function CapturePage() {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [cutMode]);
+  }, []);
 
   const captureCanvasPhoto = useCallback(async (): Promise<string | null> => {
     if (isMockMode) {
