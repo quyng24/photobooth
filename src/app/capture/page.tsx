@@ -4,6 +4,7 @@ import { Aperture, Camera, CameraOff, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePhotoStore } from "@/stores/photoStore";
+import { imageUrlToDataUrl } from "@/utils/utils";
 
 const SAMPLE_PHOTOS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
@@ -23,11 +24,11 @@ export default function CapturePage() {
   const [flash, setFlash] = useState<boolean>(false);
   const [isMockMode, setIsMockMode] = useState<boolean>(false);
 
-  const { photos, addPhoto, clearSession } = usePhotoStore();
+  const { cutMode, photos, addPhoto } = usePhotoStore();
+
+  const photoCount = cutMode === "2cut" ? 2 : 4;
 
   useEffect(() => {
-    clearSession();
-
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -51,22 +52,33 @@ export default function CapturePage() {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [clearSession]);
+  }, [cutMode]);
 
-  const captureCanvasPhoto = useCallback(() => {
+  const captureCanvasPhoto = useCallback(async (): Promise<string | null> => {
     if (isMockMode) {
-      return SAMPLE_PHOTOS[Math.floor(Math.random() * SAMPLE_PHOTOS.length)];
+      const randomPhoto =
+        SAMPLE_PHOTOS[Math.floor(Math.random() * SAMPLE_PHOTOS.length)];
+      try {
+        return await imageUrlToDataUrl(randomPhoto);
+      } catch (error) {
+        console.error("Mock photo failed: ", error);
+        return null;
+      }
     }
 
     if (videoRef.current) {
+      const video = videoRef.current as HTMLVideoElement;
       const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth || 480;
-      canvas.height = videoRef.current.videoHeight || 640;
+      canvas.width = video.videoWidth || 480;
+      canvas.height = video.videoHeight || 640;
+
       const ctx = canvas.getContext("2d");
+
       if (ctx) {
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
         return canvas.toDataURL("image/jpeg", 0.9);
       }
     }
@@ -94,23 +106,30 @@ export default function CapturePage() {
   const startPhotoSession = async () => {
     setIsCapturing(true);
 
-    for (let i = 0; i < 4; i++) {
-      await runCountdown();
+    try {
+      for (let i = 0; i < photoCount; i++) {
+        await runCountdown();
 
-      const photoDataUrl = captureCanvasPhoto();
-      if (photoDataUrl) addPhoto(photoDataUrl);
+        const photoDataUrl = await captureCanvasPhoto();
+        if (photoDataUrl) addPhoto(photoDataUrl);
 
-      setFlash(true);
-      setTimeout(() => setFlash(false), 200);
+        setFlash(true);
+        setTimeout(() => setFlash(false), 200);
 
-      if (i < 3) await sleep(1000);
+        if (i < photoCount - 1) await sleep(1000);
+      }
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+
+      router.push("/edit");
+    } catch (error) {
+      console.error("Photo session failed:", error);
+      alert("Không thể chụp ảnh vui lòng thử lại");
+      setIsCapturing(false);
     }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-
-    router.push("/edit");
   };
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center bg-teal-50 bg-[linear-gradient(to_right,#0f766e22_1px,transparent_1px),linear-gradient(to_bottom,#0f766e22_1px,transparent_1px)] bg-size-[32px_32px] p-4 md:p-6 overflow-hidden">
@@ -146,7 +165,7 @@ export default function CapturePage() {
               </p>
             </div>
             <div className="bg-cyan-300 text-black border-2 border-black font-black px-4 py-1 rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-3 transition-all">
-              {photos.length} / 4
+              {photos.length} / {photoCount}
             </div>
           </div>
 

@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Palette, Wand2, ArrowRight } from "lucide-react";
 import { usePhotoStore } from "@/stores/photoStore";
+import { renderPhotoStrip } from "@/utils/lib/renderPhotoStrip";
 
 const FRAME_STYLES = [
   { id: "pink", name: "Y2K Pink", bg: "bg-pink-300", text: "text-pink-900" },
@@ -29,6 +29,7 @@ const FILTER_STYLES = [
 ];
 
 export default function EditPage() {
+  const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
   const {
     photos,
@@ -39,7 +40,29 @@ export default function EditPage() {
     setFilter,
     customText,
     setCustomText,
+    setFinalImage,
   } = usePhotoStore();
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+
+      const finalImage = await renderPhotoStrip({
+        photos,
+        frameBg,
+        filter,
+        customText,
+      });
+
+      setFinalImage(finalImage);
+      router.push("/result");
+    } catch (error) {
+      console.error("Export image failed: ", error);
+      alert("Không thể xuất ảnh. Vui lòng thử lại");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (photos.length === 0) {
     return (
@@ -116,11 +139,17 @@ export default function EditPage() {
           </div>
 
           <div className="pt-4 border-t-4 border-black">
-            <Link href="/result">
-              <button className="w-full bg-cyan-400 hover:bg-cyan-300 text-black px-6 py-4 rounded-xl font-black text-lg border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2">
-                HOÀN THÀNH & XUẤT ẢNH <ArrowRight className="w-5 h-5" />
-              </button>
-            </Link>
+            {/* <Link href="/result"> */}
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="w-full bg-cyan-400 hover:bg-cyan-300 text-black px-6 py-4 rounded-xl font-black text-lg border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2"
+            >
+              HOÀN THÀNH & XUẤT ẢNH{" "}
+              {isExporting ? "Đang xuất ảnh" : "Hoàn Thành & Xuất Ảnh"}
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            {/* </Link> */}
           </div>
         </div>
 

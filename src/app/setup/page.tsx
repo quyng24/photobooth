@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -8,9 +7,10 @@ import {
   Sparkles,
   Image as ImageIcon,
 } from "lucide-react";
+import { usePhotoStore } from "@/stores/photoStore";
 
 export default function SetupPage() {
-  const [selectedFrame, setSelectedFrame] = useState<"2cut" | "4cut">("4cut");
+  const { cutMode, setCutMode } = usePhotoStore();
 
   return (
     <main className="min-h-screen bg-fuchsia-50 bg-[radial-gradient(#d946ef_2px,transparent_2px)] background-size-[24px_24px] p-4 md:p-10 flex flex-col items-center justify-center">
@@ -37,10 +37,10 @@ export default function SetupPage() {
         <div className="p-8 md:p-12 flex flex-col items-center bg-yellow-50/50">
           <div className="flex flex-wrap justify-center gap-8 md:gap-16 mb-12">
             <button
-              onClick={() => setSelectedFrame("2cut")}
+              onClick={() => setCutMode("2cut")}
               className={`relative flex flex-col items-center p-4 border-4 border-black rounded-2xl transition-all duration-200 w-44 md:w-52
                 ${
-                  selectedFrame === "2cut"
+                  cutMode === "2cut"
                     ? "bg-cyan-300 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -translate-x-0.5 -translate-y-0.5"
                     : "bg-white hover:bg-gray-100 opacity-60 hover:opacity-100"
                 }
@@ -54,7 +54,7 @@ export default function SetupPage() {
                 <LayoutTemplate size={24} />2 CUT
               </div>
 
-              {selectedFrame === "2cut" && (
+              {cutMode === "2cut" && (
                 <div className="absolute -top-4 -right-4 bg-pink-500 text-white p-2 rounded-full border-2 border-black shadow-sm">
                   <Sparkles size={20} fill="currentColor" />
                 </div>
@@ -62,10 +62,10 @@ export default function SetupPage() {
             </button>
 
             <button
-              onClick={() => setSelectedFrame("4cut")}
+              onClick={() => setCutMode("4cut")}
               className={`relative flex flex-col items-center p-4 border-4 border-black rounded-2xl transition-all duration-200 w-44 md:w-52
                 ${
-                  selectedFrame === "4cut"
+                  cutMode === "4cut"
                     ? "bg-pink-400 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -translate-x-0.5 -translate-y-0.5"
                     : "bg-white hover:bg-gray-100 opacity-60 hover:opacity-100"
                 }
@@ -81,7 +81,7 @@ export default function SetupPage() {
                 <ImageIcon size={24} />4 CUT
               </div>
 
-              {selectedFrame === "4cut" && (
+              {cutMode === "4cut" && (
                 <div className="absolute -top-4 -right-4 bg-yellow-400 text-black p-2 rounded-full border-2 border-black shadow-sm">
                   <Sparkles size={20} fill="currentColor" />
                 </div>
