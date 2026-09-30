@@ -6,100 +6,163 @@ import {
   LayoutTemplate,
   Sparkles,
   Image as ImageIcon,
+  Check,
+  ArrowLeft,
+  Sun,
+  Timer,
+  RefreshCw,
 } from "lucide-react";
 import { usePhotoStore } from "@/stores/photoStore";
+import { Y2kShell } from "@/components/y2k/Y2kShell";
+import { Y2kWindow } from "@/components/y2k/Y2kWindow";
+import { Y2kSteps } from "@/components/y2k/Y2kSteps";
+import { Y2kMarquee } from "@/components/y2k/Y2kMarquee";
+import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
+
+const TIPS = [
+  { icon: Sun, title: "Ánh sáng mặt", text: "Ngồi đối diện cửa sổ, tránh đèn sau lưng." },
+  { icon: Timer, title: "Countdown 3s", text: "Tạo dáng trước khi số 1 hiện." },
+  { icon: RefreshCw, title: "Retake", text: "Chụp lại từng ô, không cần làm cả dải." },
+];
 
 export default function SetupPage() {
   const { cutMode, setCutMode } = usePhotoStore();
 
   return (
-    <main className="min-h-screen bg-fuchsia-50 bg-[radial-gradient(#d946ef_2px,transparent_2px)] background-size-[24px_24px] p-4 md:p-10 flex flex-col items-center justify-center">
-      <div className="flex items-center gap-3 mb-8">
-        <Sparkles className="text-yellow-500 animate-pulse" size={36} />
-        <h1 className="text-4xl md:text-5xl font-black uppercase text-black drop-shadow-[4px_4px_0px_#22d3ee]">
-          Chọn khung ảnh
-        </h1>
-        <Sparkles className="text-pink-500 animate-pulse" size={36} />
-      </div>
+    <Y2kShell showStickers>
+      <Y2kMarquee
+        tone="cyan"
+        items={["CHOOSE YOUR FRAME", "2-CUT MINI", "4-CUT CLASSIC", "Y2K BOOTH ONLINE"]}
+      />
 
-      <div className="w-full max-w-3xl bg-white border-4 border-black rounded-2xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col overflow-hidden">
-        <div className="bg-black px-4 py-2 flex items-center justify-between border-b-4 border-black">
-          <div className="flex gap-2">
-            <div className="w-3 h-3 rounded-full bg-pink-500 border border-white"></div>
-            <div className="w-3 h-3 rounded-full bg-yellow-400 border border-white"></div>
-            <div className="w-3 h-3 rounded-full bg-cyan-400 border border-white"></div>
-          </div>
-          <span className="text-white text-xs font-mono tracking-widest font-bold">
-            FRAME_SELECT.EXE
-          </span>
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-4 px-4 py-4 sm:py-6">
+        <div className="flex w-full items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 border-black bg-white px-3 py-1.5 text-xs font-extrabold shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-300"
+          >
+            <ArrowLeft size={14} />
+            TRANG CHỦ
+          </Link>
+          <Y2kSteps current={1} />
         </div>
 
-        <div className="p-8 md:p-12 flex flex-col items-center bg-yellow-50/50">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 mb-12">
-            <button
-              onClick={() => setCutMode("2cut")}
-              className={`relative flex flex-col items-center p-4 border-4 border-black rounded-2xl transition-all duration-200 w-44 md:w-52
-                ${
-                  cutMode === "2cut"
-                    ? "bg-cyan-300 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -translate-x-0.5 -translate-y-0.5"
-                    : "bg-white hover:bg-gray-100 opacity-60 hover:opacity-100"
-                }
-              `}
-            >
-              <div className="w-24 bg-white border-2 border-black p-2 pb-6 shadow-inner rounded-sm flex flex-col gap-2 mb-4">
-                <div className="w-full aspect-4/3 bg-gray-200 border border-gray-400 rounded-sm"></div>
-                <div className="w-full aspect-4/3 bg-gray-200 border border-gray-400 rounded-sm"></div>
-              </div>
-              <div className="flex items-center gap-2 font-black text-2xl uppercase">
-                <LayoutTemplate size={24} />2 CUT
-              </div>
+        <div className="flex items-center justify-center gap-2">
+          <Sparkles className="h-6 w-6 shrink-0 text-yellow-400" fill="currentColor" />
+          <h1 className="text-center text-2xl font-black uppercase tracking-tight drop-shadow-[2px_2px_0px_#22d3ee] sm:text-3xl">
+            Chọn Khung Ảnh
+          </h1>
+          <Sparkles className="h-6 w-6 shrink-0 text-pink-500" fill="currentColor" />
+        </div>
 
+        <Y2kWindow
+          title="FRAME_SELECT.EXE"
+          badge={
+            <span className="rounded border border-white bg-pink-500 px-2 py-0.5 font-mono text-[10px] font-bold uppercase">
+              Y2K BOOTH
+            </span>
+          }
+          className="w-full"
+          bodyClassName="flex flex-col items-center bg-[#fffbe6] p-3 sm:p-4"
+        >
+          <p className="mb-3 rounded-lg border-2 border-black bg-white px-3 py-1 text-center text-xs font-bold shadow-[2px_2px_0px_0px_#000]">
+            💡 Chọn kiểu strip trước khi vào phòng chụp
+          </p>
+
+          <div className="mb-3 grid w-full grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setCutMode("2cut")}
+              className={`relative flex cursor-pointer flex-col items-center rounded-2xl border-3 border-black p-3 text-center transition-all ${
+                cutMode === "2cut"
+                  ? "bg-cyan-300 shadow-[5px_5px_0px_0px_#000]"
+                  : "bg-white opacity-80 shadow-[3px_3px_0px_0px_#000] hover:opacity-100"
+              }`}
+            >
+              <div className="mb-2 self-start rounded bg-black px-2 py-0.5 font-mono text-[9px] font-bold text-white">
+                CLASSIC
+              </div>
+              <div className="mb-2 flex w-20 flex-col gap-1 rounded-md border-2 border-black bg-white p-1.5">
+                <div className="flex aspect-4/3 items-center justify-center rounded border border-black bg-pink-100">
+                  <ImageIcon size={12} className="text-pink-400" />
+                </div>
+                <div className="flex aspect-4/3 items-center justify-center rounded border border-black bg-pink-100">
+                  <ImageIcon size={12} className="text-pink-400" />
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-lg font-black uppercase">
+                <LayoutTemplate size={16} /> 2 CUT
+              </div>
+              <span className="text-[11px] font-semibold">Dải 2 ảnh • Gọn nhẹ</span>
               {cutMode === "2cut" && (
-                <div className="absolute -top-4 -right-4 bg-pink-500 text-white p-2 rounded-full border-2 border-black shadow-sm">
-                  <Sparkles size={20} fill="currentColor" />
+                <div className="absolute -top-2 -right-2 rounded-full border-2 border-black bg-pink-500 p-1 text-white">
+                  <Check size={14} strokeWidth={3} />
                 </div>
               )}
             </button>
 
             <button
+              type="button"
               onClick={() => setCutMode("4cut")}
-              className={`relative flex flex-col items-center p-4 border-4 border-black rounded-2xl transition-all duration-200 w-44 md:w-52
-                ${
-                  cutMode === "4cut"
-                    ? "bg-pink-400 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] -translate-x-0.5 -translate-y-0.5"
-                    : "bg-white hover:bg-gray-100 opacity-60 hover:opacity-100"
-                }
-              `}
+              className={`relative flex cursor-pointer flex-col items-center rounded-2xl border-3 border-black p-3 text-center transition-all ${
+                cutMode === "4cut"
+                  ? "bg-pink-400 shadow-[5px_5px_0px_0px_#000]"
+                  : "bg-white opacity-80 shadow-[3px_3px_0px_0px_#000] hover:opacity-100"
+              }`}
             >
-              <div className="w-24 bg-white border-2 border-black p-2 pb-6 shadow-inner rounded-sm flex flex-col gap-1.5 mb-4">
-                <div className="w-full aspect-4/3 bg-gray-200 border border-gray-400 rounded-sm"></div>
-                <div className="w-full aspect-4/3 bg-gray-200 border border-gray-400 rounded-sm"></div>
-                <div className="w-full aspect-4/3 bg-gray-200 border border-gray-400 rounded-sm"></div>
-                <div className="w-full aspect-4/3 bg-gray-200 border border-gray-400 rounded-sm"></div>
+              <div className="mb-2 self-start rounded border border-black bg-yellow-300 px-2 py-0.5 font-mono text-[9px] font-black">
+                ★ POPULAR
               </div>
-              <div className="flex items-center gap-2 font-black text-2xl uppercase">
-                <ImageIcon size={24} />4 CUT
+              <div className="mb-2 grid w-20 grid-cols-2 gap-1 rounded-md border-2 border-black bg-white p-1.5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="flex aspect-4/3 items-center justify-center rounded border border-black bg-cyan-100"
+                  >
+                    <ImageIcon size={10} className="text-cyan-500" />
+                  </div>
+                ))}
               </div>
-
+              <div className="flex items-center gap-1 text-lg font-black uppercase">
+                <ImageIcon size={16} /> 4 CUT
+              </div>
+              <span className="text-[11px] font-semibold">Dải 4 ảnh • Chuẩn Hàn</span>
               {cutMode === "4cut" && (
-                <div className="absolute -top-4 -right-4 bg-yellow-400 text-black p-2 rounded-full border-2 border-black shadow-sm">
-                  <Sparkles size={20} fill="currentColor" />
+                <div className="absolute -top-2 -right-2 rounded-full border-2 border-black bg-yellow-300 p-1">
+                  <Check size={14} strokeWidth={3} />
                 </div>
               )}
             </button>
           </div>
 
-          <Link href="/capture" className="w-full max-w-sm">
-            <button className="group flex items-center justify-center w-full gap-3 bg-black text-white px-8 py-4 rounded-xl font-black text-xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(34,211,238,1)] hover:translate-y-1.5] hover:translate-x-1.5 hover:shadow-none hover:text-cyan-300 transition-all active:bg-gray-900">
-              TIẾP TỤC
-              <ArrowRight
-                size={24}
-                className="group-hover:translate-x-1 transition-transform"
-              />
+          <div className="mb-3 grid w-full grid-cols-3 gap-2">
+            {TIPS.map((tip) => (
+              <div
+                key={tip.title}
+                className="rounded-xl border-2 border-black bg-white p-2 shadow-[2px_2px_0px_0px_#000]"
+              >
+                <div className="mb-0.5 flex items-center gap-1.5">
+                  <tip.icon size={12} />
+                  <p className="text-[10px] font-black uppercase">{tip.title}</p>
+                </div>
+                <p className="text-[10px] font-semibold leading-snug text-zinc-600">{tip.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <Link href={`/capture?mode=${cutMode}`} className="group w-full max-w-sm">
+            <button
+              type="button"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-3 border-black bg-black py-3 text-base font-black text-white shadow-[4px_4px_0px_0px_#22d3ee] hover:text-cyan-300"
+            >
+              TIẾP TỤC CHỤP
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
             </button>
           </Link>
-        </div>
+        </Y2kWindow>
       </div>
-    </main>
+
+      <FilmStripFooter text="PICK A FRAME • THEN SAY CHEESE" />
+    </Y2kShell>
   );
 }

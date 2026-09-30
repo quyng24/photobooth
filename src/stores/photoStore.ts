@@ -16,12 +16,16 @@ interface PhotoState {
 
   // Actions
   setCutMode: (mode: CutMode) => void;
+
   addPhoto: (photo: string) => void;
+  replacePhoto: (index: number, photo: string) => void;
   removePhoto: (index: number) => void;
+
   setFrame: (bg: string, text: string) => void;
   setFilter: (filter: string) => void;
   setCustomText: (text: string) => void;
   setFinalImage: (image: string | null) => void;
+
   clearPhotos: () => void;
   clearSession: () => void;
 }
@@ -52,6 +56,10 @@ export const usePhotoStore = create<PhotoState>((set) => ({
         photos: [...state.photos, photo],
       };
     }),
+  replacePhoto: (index, photo) =>
+    set((state) => ({
+      photos: state.photos.map((item, i) => (i === index ? photo : item)),
+    })),
   removePhoto: (index) =>
     set((state) => ({
       photos: state.photos.filter((_, i) => i !== index),
