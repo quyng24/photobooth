@@ -175,12 +175,12 @@ export default function CapturePage() {
   useEffect(() => {
     unmountedRef.current = false;
 
-    setCameraStatus("loading");
-    setCameraError("");
-
-    requestCameraStream("user");
+    const requestId = window.setTimeout(() => {
+      requestCameraStream("user");
+    }, 0);
 
     return () => {
+      window.clearTimeout(requestId);
       unmountedRef.current = true;
       stopCamera();
     };
