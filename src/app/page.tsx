@@ -16,6 +16,7 @@ import { Y2kShell } from "@/components/y2k/Y2kShell";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
 import { Y2kMarquee } from "@/components/y2k/Y2kMarquee";
 import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
+import { HomeMascot } from "@/components/y2k/HomeMascot";
 
 const STEPS = [
   { n: "01", title: "Chọn khung", desc: "2-cut hoặc 4-cut", icon: ImageIcon, bg: "bg-cyan-300" },
@@ -57,7 +58,8 @@ export default function Home() {
           title="C:\\LIFE_4_CUT.EXE"
           badge={<Smile size={16} className="text-yellow-400" />}
           className="w-full max-w-lg"
-          bodyClassName="flex flex-col items-center p-4 text-center sm:p-5"
+          bodyClassName="flex flex-col items-center p-3 text-center sm:p-5"
+          frameFromSm
         >
           <div className="mb-2 flex flex-wrap justify-center gap-1.5">
             <span className="-rotate-2 rounded-full border-2 border-black bg-yellow-300 px-2.5 py-0.5 text-[10px] font-black">
@@ -117,16 +119,19 @@ export default function Home() {
             ))}
           </div>
 
-          <Link href="/setup" className="group w-full">
-            <button
-              type="button"
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-3 border-black bg-cyan-400 px-4 py-3 text-base font-black shadow-[4px_4px_0px_0px_#000] hover:bg-pink-400"
+          <div className="flex w-full items-center gap-2">
+            <div className="shrink-0 sm:hidden">
+              <HomeMascot />
+            </div>
+            <Link
+              href="/setup"
+              className="group flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border-3 border-black bg-cyan-400 px-2 py-3 text-xs font-black shadow-[4px_4px_0px_0px_#000] hover:bg-pink-400 sm:gap-2 sm:px-4 sm:text-base"
             >
               <Camera className="h-5 w-5" />
               BẮT ĐẦU CHỤP NGAY
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </button>
-          </Link>
+            </Link>
+          </div>
         </Y2kWindow>
 
         <div className="relative hidden w-52 shrink-0 rotate-2 lg:block">
