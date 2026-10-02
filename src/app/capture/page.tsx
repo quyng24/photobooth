@@ -152,11 +152,11 @@ export default function CapturePage() {
     }
   }, [handleCameraError, stopCamera]);
 
-  const startCamera = useCallback(() => {
+  const startCamera = useCallback(async() => {
     setCameraStatus("loading");
     setCameraError("");
     setIsMockMode(false);
-    requestCameraStream(facingMode);
+    await requestCameraStream(facingMode);
   }, [facingMode, requestCameraStream]);
 
   useEffect(() => {
@@ -175,59 +175,16 @@ export default function CapturePage() {
   useEffect(() => {
     unmountedRef.current = false;
 
-    if (!navigator.mediaDevices?.getUserMedia) {
-      const t = setTimeout(() => {
-        if (!unmountedRef.current) {
-          setCameraStatus("unavailable");
-          setCameraError(
-            "Trình duyệt hoặc môi trường hiện tại không hỗ trợ camera."
-          );
-        }
-      }, 0);
-      return () => {
-        clearTimeout(t);
-        unmountedRef.current = true;
-      };
-    }
+    setCameraStatus("loading");
+    setCameraError("");
 
-    let active = true;
-
-    navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          facingMode: { ideal: "user" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      })
-      .then((stream) => {
-        if (!active || unmountedRef.current) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        streamRef.current = stream;
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => { });
-        }
-
-        setCameraStatus("ready");
-      })
-      .catch((error) => {
-        if (active && !unmountedRef.current) {
-          handleCameraError(error);
-        }
-      });
+    requestCameraStream("user");
 
     return () => {
-      active = false;
       unmountedRef.current = true;
       stopCamera();
     };
-  }, [handleCameraError, stopCamera]);
+  }, [requestCameraStream, stopCamera]);
 
   const switchCamera = async () => {
     const nextMode = facingMode === "user" ? "environment" : "user";
@@ -358,8 +315,10 @@ export default function CapturePage() {
     }
 
     // Mirror image horizontally to match preview
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+    if(facingMode === "user") {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
 
     ctx.drawImage(
       video,
@@ -374,7 +333,7 @@ export default function CapturePage() {
     );
 
     return canvas.toDataURL("image/jpeg", 0.92);
-  }, [isMockMode]);
+  }, [isMockMode, facingMode]);
 
   const sleep = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -734,6 +693,8 @@ export default function CapturePage() {
               playsInline
               muted
               className={`w-full h-full object-cover scale-x-[-1] z-0 ${
+                facingMode === "user" ? "scale-x-[-1]" : ""
+              } ${
                 cameraStatus === "ready" && !isMockMode ? "block" : "hidden"
               }`}
             />
