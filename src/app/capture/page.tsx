@@ -33,6 +33,8 @@ type CameraStatus =
   | "unavailable"
   | "error";
 
+  type FacingMode = "user" | "environment";
+
 export default function CapturePage() {
   const router = useRouter();
 
@@ -40,6 +42,8 @@ export default function CapturePage() {
   const streamRef = useRef<MediaStream | null>(null);
   const unmountedRef = useRef(false);
 
+  const [facingMode, setFacingMode] = useState<FacingMode>("user");
+  const [isMobile, setIsMobile] = useState(false);
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>("loading");
   const [cameraError, setCameraError] = useState("");
   const [isCapturing, setIsCapturing] = useState(false);
@@ -106,7 +110,7 @@ export default function CapturePage() {
     setCameraError("Không thể khởi động camera. Vui lòng thử lại.");
   }, []);
 
-  const requestCameraStream = useCallback(async () => {
+  const requestCameraStream = useCallback(async (mode: FacingMode) => {
     stopCamera();
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -120,7 +124,7 @@ export default function CapturePage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { ideal: mode },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -140,6 +144,7 @@ export default function CapturePage() {
       }
 
       setCameraStatus("ready");
+      setCameraError("");
     } catch (error) {
       if (!unmountedRef.current) {
         handleCameraError(error);
@@ -151,8 +156,20 @@ export default function CapturePage() {
     setCameraStatus("loading");
     setCameraError("");
     setIsMockMode(false);
-    requestCameraStream();
-  }, [requestCameraStream]);
+    requestCameraStream(facingMode);
+  }, [facingMode, requestCameraStream]);
+
+  useEffect(() => {
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const updateMobileState = () => setIsMobile(coarsePointer.matches);
+
+    updateMobileState();
+    coarsePointer.addEventListener("change", updateMobileState);
+
+    return () => {
+      coarsePointer.removeEventListener("change", updateMobileState);
+    };
+  }, []);
 
   // Initialize camera once mounted
   useEffect(() => {
@@ -178,7 +195,7 @@ export default function CapturePage() {
     navigator.mediaDevices
       .getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { ideal: "user" },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -211,6 +228,14 @@ export default function CapturePage() {
       stopCamera();
     };
   }, [handleCameraError, stopCamera]);
+
+  const switchCamera = async () => {
+    const nextMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(nextMode);
+    setCameraStatus("loading");
+    setCameraError("");
+    await requestCameraStream(nextMode);
+  };
 
   // Keep video source synced with stream
   useEffect(() => {
@@ -674,6 +699,27 @@ export default function CapturePage() {
                     : "STBY"}
               </span>
             </div>
+
+            {isMobile && !isMockMode && (
+              <button
+                type="button"
+                onClick={switchCamera}
+                disabled={cameraStatus !== "ready" || isCapturing}
+                aria-label={
+                  facingMode === "user"
+                    ? "Chuyển sang camera sau"
+                    : "Chuyển sang camera trước"
+                }
+                title={
+                  facingMode === "user"
+                    ? "Chuyển sang camera sau"
+                    : "Chuyển sang camera trước"
+                }
+                className="absolute top-3 right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/70 bg-black/60 text-white backdrop-blur-sm transition hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw size={18} />
+              </button>
+            )}
 
             <div className="absolute inset-4 border-2 border-white/30 pointer-events-none z-10">
               <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white" />
