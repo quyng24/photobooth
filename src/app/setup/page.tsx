@@ -8,9 +8,6 @@ import {
   Image as ImageIcon,
   Check,
   ArrowLeft,
-  Sun,
-  Timer,
-  RefreshCw,
 } from "lucide-react";
 import { usePhotoStore } from "@/stores/photoStore";
 import { Y2kShell } from "@/components/y2k/Y2kShell";
@@ -18,12 +15,6 @@ import { Y2kWindow } from "@/components/y2k/Y2kWindow";
 import { Y2kSteps } from "@/components/y2k/Y2kSteps";
 import { Y2kMarquee } from "@/components/y2k/Y2kMarquee";
 import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
-
-const TIPS = [
-  { icon: Sun, title: "Ánh sáng mặt", text: "Ngồi đối diện cửa sổ, tránh đèn sau lưng." },
-  { icon: Timer, title: "Countdown 3s", text: "Tạo dáng trước khi số 1 hiện." },
-  { icon: RefreshCw, title: "Retake", text: "Chụp lại từng ô, không cần làm cả dải." },
-];
 
 export default function SetupPage() {
   const { cutMode, setCutMode } = usePhotoStore();
@@ -57,19 +48,10 @@ export default function SetupPage() {
 
         <Y2kWindow
           title="FRAME_SELECT.EXE"
-          badge={
-            <span className="rounded border border-white bg-pink-500 px-2 py-0.5 font-mono text-[10px] font-bold uppercase">
-              Y2K BOOTH
-            </span>
-          }
           className="w-full"
           bodyClassName="flex flex-col items-center bg-[#fffbe6] p-3 sm:p-4"
         >
-          <p className="mb-3 rounded-lg border-2 border-black bg-white px-3 py-1 text-center text-xs font-bold shadow-[2px_2px_0px_0px_#000]">
-            💡 Chọn kiểu strip trước khi vào phòng chụp
-          </p>
-
-          <div className="mb-3 grid w-full grid-cols-2 gap-3">
+          <div className="mb-2 grid w-full grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setCutMode("2cut")}
@@ -79,9 +61,6 @@ export default function SetupPage() {
                   : "bg-white opacity-80 shadow-[3px_3px_0px_0px_#000] hover:opacity-100"
               }`}
             >
-              <div className="mb-2 self-start rounded bg-black px-2 py-0.5 font-mono text-[9px] font-bold text-white">
-                CLASSIC
-              </div>
               <div className="mb-2 flex w-20 flex-col gap-1 rounded-md border-2 border-black bg-white p-1.5">
                 <div className="flex aspect-4/3 items-center justify-center rounded border border-black bg-pink-100">
                   <ImageIcon size={12} className="text-pink-400" />
@@ -110,9 +89,6 @@ export default function SetupPage() {
                   : "bg-white opacity-80 shadow-[3px_3px_0px_0px_#000] hover:opacity-100"
               }`}
             >
-              <div className="mb-2 self-start rounded border border-black bg-yellow-300 px-2 py-0.5 font-mono text-[9px] font-black">
-                ★ POPULAR
-              </div>
               <div className="mb-2 grid w-20 grid-cols-2 gap-1 rounded-md border-2 border-black bg-white p-1.5">
                 {[1, 2, 3, 4].map((i) => (
                   <div
@@ -135,29 +111,16 @@ export default function SetupPage() {
             </button>
           </div>
 
-          <div className="mb-3 grid w-full grid-cols-3 gap-2">
-            {TIPS.map((tip) => (
-              <div
-                key={tip.title}
-                className="rounded-xl border-2 border-black bg-white p-2 shadow-[2px_2px_0px_0px_#000]"
-              >
-                <div className="mb-0.5 flex items-center gap-1.5">
-                  <tip.icon size={12} />
-                  <p className="text-[10px] font-black uppercase">{tip.title}</p>
-                </div>
-                <p className="text-[10px] font-semibold leading-snug text-zinc-600">{tip.text}</p>
-              </div>
-            ))}
-          </div>
+          <p className="mb-3 text-center text-[11px] font-semibold text-zinc-600">
+            Ánh sáng hướng về mặt · Tạo dáng theo countdown · Có thể retake từng ô
+          </p>
 
-          <Link href={`/capture?mode=${cutMode}`} className="group w-full max-w-sm">
-            <button
-              type="button"
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-3 border-black bg-black py-3 text-base font-black text-white shadow-[4px_4px_0px_0px_#22d3ee] hover:text-cyan-300"
-            >
-              TIẾP TỤC CHỤP
-              <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-            </button>
+          <Link
+            href={`/capture?mode=${cutMode}`}
+            className="group flex w-full max-w-sm cursor-pointer items-center justify-center gap-2 rounded-xl border-3 border-black bg-black py-3 text-base font-black text-white shadow-[4px_4px_0px_0px_#22d3ee] hover:text-cyan-300"
+          >
+            TIẾP TỤC CHỤP
+            <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </Y2kWindow>
       </div>

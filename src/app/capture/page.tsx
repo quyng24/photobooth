@@ -5,8 +5,6 @@ import {
   ArrowLeft,
   Camera,
   CameraOff,
-  Heart,
-  Lightbulb,
   RefreshCw,
   Sparkles,
 } from "lucide-react";
@@ -20,13 +18,6 @@ import { Y2kSteps } from "@/components/y2k/Y2kSteps";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
 import { usePhotoStore } from "@/stores/photoStore";
 import { imageUrlToDataUrl } from "@/utils/utils";
-
-const POSES = [
-  { emoji: "✌️", name: "Peace", hint: "Tay chữ V sát má" },
-  { emoji: "💗", name: "Heart", hint: "Tim tay trước ngực" },
-  { emoji: "😮", name: "Wow", hint: "Mắt tròn, miệng O" },
-  { emoji: "😎", name: "Cool", hint: "Nghiêng đầu, nhìn camera" },
-];
 
 const SAMPLE_PHOTOS = [
   "/images/image1.png",
@@ -638,7 +629,7 @@ export default function CapturePage() {
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 items-start gap-4 px-4 py-3 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-3 px-4 py-3">
         <Y2kWindow
           title="CAPTURE_STUDIO.EXE"
           badge={
@@ -659,9 +650,6 @@ export default function CapturePage() {
                   ? "Sẵn sàng decor — hoặc retake."
                   : `Tạo dáng (${photos.length}/${photoCount})`}
               </p>
-            </div>
-            <div className="rotate-3 rounded-full border-2 border-black bg-pink-400 px-3 py-0.5 text-sm font-black text-white shadow-[3px_3px_0px_0px_#000]">
-              {photos.length} / {photoCount}
             </div>
           </div>
 
@@ -724,13 +712,13 @@ export default function CapturePage() {
             )}
           </div>
 
-          <div className="w-full mb-5">
-            <div className="flex items-center justify-between mb-3 px-1">
+          <div className="w-full mb-3">
+            <div className="flex items-center justify-between mb-2 px-1">
               <p className="text-sm font-black uppercase text-black">
-                Film strip ({photos.length}/{photoCount})
+                Ảnh đã chụp
               </p>
               <span className="text-xs font-bold text-zinc-500">
-                Slot trống = chưa chụp
+                {photos.length}/{photoCount}
               </span>
             </div>
 
@@ -829,48 +817,6 @@ export default function CapturePage() {
           </div>
         </Y2kWindow>
 
-        <aside className="flex flex-col gap-3">
-          <div className="bg-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_#000]">
-            <div className="flex items-center gap-2 mb-2">
-              <Heart size={16} className="text-pink-500 fill-pink-500" />
-              <p className="font-black text-xs uppercase">Pose card</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {POSES.map((pose) => (
-                <div
-                  key={pose.name}
-                  className="border-2 border-black rounded-xl bg-pink-50 p-2 text-center"
-                >
-                  <p className="text-lg leading-none">{pose.emoji}</p>
-                  <p className="font-black text-[10px] uppercase mt-1">{pose.name}</p>
-                  <p className="text-[9px] font-semibold text-zinc-500">{pose.hint}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-yellow-300 border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_#000]">
-            <div className="flex items-center gap-2 mb-2">
-              <Lightbulb size={16} />
-              <p className="font-black text-xs uppercase">Booth tips</p>
-            </div>
-            <ul className="text-[11px] font-bold space-y-1.5 leading-snug">
-              <li>• Nâng máy ngang mắt, không chụp từ dưới cằm.</li>
-              <li>• Đếm 3-2-1 rồi giữ dáng thêm 0.5s.</li>
-              <li>• Đổi pose mỗi shot để strip sống động.</li>
-            </ul>
-          </div>
-
-          <div className="bg-black text-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_#ff69b4]">
-            <p className="font-mono text-[10px] text-cyan-300 font-bold">STATUS.LOG</p>
-            <p className="font-black text-sm mt-1 uppercase">
-              {isMockMode ? "Mock cam ON" : cameraStatus === "ready" ? "Live cam ON" : "Cam standby"}
-            </p>
-            <p className="text-[11px] font-semibold text-zinc-300 mt-1">
-              Khung {cutMode === "2cut" ? "2" : "4"} cut • flash khi chụp
-            </p>
-          </div>
-        </aside>
       </div>
 
       <div className="w-full max-w-6xl mt-6">

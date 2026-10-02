@@ -16,7 +16,7 @@ const DEFAULT_STEPS: Step[] = [
 
 export function Y2kSteps({ current, steps = DEFAULT_STEPS }: Y2kStepsProps) {
   return (
-    <ol className="flex w-full max-w-xl items-stretch gap-1.5 sm:gap-2">
+    <ol aria-label="Tiến trình" className="flex w-auto max-w-xl items-center justify-end gap-2 sm:gap-4">
       {steps.map((step, index) => {
         const num = (index + 1) as 1 | 2 | 3;
         const active = num === current;
@@ -25,16 +25,21 @@ export function Y2kSteps({ current, steps = DEFAULT_STEPS }: Y2kStepsProps) {
         return (
           <li
             key={step.n}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border-2 border-black px-2 py-1 font-black text-[10px] sm:text-xs uppercase shadow-[2px_2px_0px_0px_#000] ${
+            aria-current={active ? "step" : undefined}
+            className={`flex items-center gap-1 whitespace-nowrap text-[9px] font-bold uppercase sm:gap-1.5 sm:text-xs ${
               active
-                ? "bg-pink-400 text-white"
+                ? "text-black"
                 : done
-                  ? "bg-cyan-300 text-black"
-                  : "bg-white text-zinc-500"
+                  ? "text-zinc-700"
+                  : "text-zinc-400"
             }`}
           >
-            <span className="font-mono">{step.n}</span>
-            <span>{step.label}</span>
+            <span className={`font-mono ${active ? "text-pink-600" : "text-zinc-500"}`}>
+              {step.n}
+            </span>
+            <span className={active ? "underline decoration-2 underline-offset-2" : ""}>
+              {step.label}
+            </span>
           </li>
         );
       })}

@@ -9,8 +9,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Type,
-  Sparkles,
-  Sticker,
 } from "lucide-react";
 import { usePhotoStore } from "@/stores/photoStore";
 import { renderPhotoStrip } from "@/lib/renderPhotoStrip";
@@ -41,8 +39,6 @@ const FILTER_STYLES = [
     filter: "saturate(1.45) contrast(1.15) hue-rotate(8deg)",
   },
 ];
-
-const STICKER_IDEAS = ["★ cute", "♥ luv", "☆ cool", "♪ pop"];
 
 export default function EditPage() {
   const [isExporting, setIsExporting] = useState(false);
@@ -111,7 +107,7 @@ export default function EditPage() {
       />
 
       <div className="max-w-6xl w-full mx-auto px-3 sm:px-6 py-5 sm:py-8 flex flex-col">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
           <Link
             href="/capture"
             className="inline-flex items-center justify-center gap-1.5 bg-white text-black font-extrabold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl border-2 sm:border-3 border-black shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-300 transition-all"
@@ -120,17 +116,13 @@ export default function EditPage() {
             STUDIO
           </Link>
           <Y2kSteps current={3} />
-          <div className="bg-pink-400 text-white font-black text-xs px-3 py-2 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] text-center uppercase">
-            Decor mode
-          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           <Y2kWindow
             title="DECOR_LAB.EXE"
-            badge={<Sparkles size={14} className="text-yellow-300" />}
             className="w-full lg:w-1/2"
-            bodyClassName="p-5 sm:p-6 space-y-6 bg-[#fffbe6]"
+            bodyClassName="p-4 sm:p-5 space-y-5 bg-[#fffbe6]"
           >
             <div className="border-b-3 border-black pb-4">
               <h1 className="text-3xl font-black uppercase tracking-tight">Trang Trí</h1>
@@ -189,41 +181,9 @@ export default function EditPage() {
                 className="w-full px-4 py-3 border-2 border-black rounded-xl font-mono text-sm font-bold bg-white outline-none ring-black focus:ring-2"
               />
               <div className="flex justify-between mt-1.5">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase">
-                  Hiện ở chân dải ảnh
-                </span>
                 <span className="text-[10px] font-mono font-black">
                   {customText.length}/25
                 </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {["Y2K_LIFE4CUT", "BFF 4EVER", "CYBER LOVE", "2000s BABY"].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setCustomText(preset)}
-                    className="text-[10px] font-black uppercase bg-white border-2 border-black px-2 py-0.5 rounded-full hover:bg-cyan-200"
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white border-2 border-black rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Sticker size={16} />
-                <p className="font-black text-xs uppercase">Vibe sticker</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {STICKER_IDEAS.map((s) => (
-                  <span
-                    key={s}
-                    className="text-[10px] font-black uppercase border-2 border-black bg-pink-200 px-2 py-1 rounded-lg rotate-1"
-                  >
-                    {s}
-                  </span>
-                ))}
               </div>
             </div>
 
@@ -240,9 +200,9 @@ export default function EditPage() {
           </Y2kWindow>
 
           <div className="w-full lg:w-1/2 flex flex-col items-center gap-4 lg:sticky lg:top-8">
-            <div className="self-stretch bg-white border-3 border-black rounded-2xl px-4 py-2 shadow-[3px_3px_0px_0px_#000] flex items-center justify-between">
-              <span className="font-black text-xs uppercase">Live preview</span>
-              <span className="font-mono text-[10px] font-bold bg-yellow-300 border-2 border-black px-2 py-0.5 rounded">
+            <div className="self-stretch flex items-center justify-between text-xs font-bold text-zinc-600">
+              <span className="font-black uppercase">Live preview</span>
+              <span className="font-mono">
                 {photos.length}-CUT
               </span>
             </div>
@@ -279,9 +239,6 @@ export default function EditPage() {
                     {customText}
                   </p>
                 </div>
-              </div>
-              <div className="absolute -top-3 -right-4 bg-yellow-300 border-2 border-black font-black text-[10px] px-2 py-1 rounded-full -rotate-12 shadow-[2px_2px_0px_0px_#000]">
-                PREVIEW
               </div>
             </div>
           </div>
