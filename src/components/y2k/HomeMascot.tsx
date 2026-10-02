@@ -7,8 +7,6 @@ export function HomeMascot() {
     <Mascot
       directions="/mascots/cat-directions.webp"
       reactions="/mascots/cat-reactions.webp"
-      size={68}
-      label="cat mascot"
     />
   );
 }
