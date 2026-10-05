@@ -12,16 +12,28 @@ import {
   Sun,
   UserCheck,
   BatteryCharging,
+  Palette,
 } from "lucide-react";
-import { usePhotoStore } from "@/stores/photoStore";
+import { FRAME_STYLES, getFrameConfig, usePhotoStore } from "@/stores/photoStore";
+import type { TimerOption } from "@/types";
 import { Y2kShell } from "@/components/y2k/Y2kShell";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
 import { Y2kSteps } from "@/components/y2k/Y2kSteps";
 import { Y2kMarquee } from "@/components/y2k/Y2kMarquee";
 import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
 
+const TIMER_OPTIONS: TimerOption[] = [3, 5, 10];
+
 export default function SetupPage() {
-  const { cutMode, setCutMode } = usePhotoStore();
+  const {
+    cutMode,
+    setCutMode,
+    frameStyle,
+    setFrameStyle,
+    timer,
+    setTimer,
+  } = usePhotoStore();
+  const selectedFrame = getFrameConfig(frameStyle);
 
   return (
     <Y2kShell showStickers>
@@ -77,6 +89,7 @@ export default function SetupPage() {
                 <button
                   type="button"
                   onClick={() => setCutMode("2cut")}
+                  aria-pressed={cutMode === "2cut"}
                   className={`relative flex cursor-pointer flex-col items-center rounded-2xl border-3 border-black p-4 text-center transition-all ${
                     cutMode === "2cut"
                       ? "bg-cyan-300 shadow-[6px_6px_0px_0px_#000] -translate-y-1"
@@ -107,6 +120,7 @@ export default function SetupPage() {
                 <button
                   type="button"
                   onClick={() => setCutMode("4cut")}
+                  aria-pressed={cutMode === "4cut"}
                   className={`relative flex cursor-pointer flex-col items-center rounded-2xl border-3 border-black p-4 text-center transition-all ${
                     cutMode === "4cut"
                       ? "bg-pink-400 shadow-[6px_6px_0px_0px_#000] -translate-y-1 text-white"
@@ -138,6 +152,87 @@ export default function SetupPage() {
                   )}
                 </button>
               </div>
+
+              <section
+                aria-labelledby="frame-style-heading"
+                className={`mb-6 w-full rounded-2xl border-3 border-black p-3 shadow-[4px_4px_0px_0px_#000] sm:p-4 ${selectedFrame.background}`}
+              >
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h2
+                    id="frame-style-heading"
+                    className={`flex items-center gap-2 text-sm font-black uppercase tracking-wide sm:text-base ${selectedFrame.textColor}`}
+                  >
+                    <Palette size={18} />
+                    Chọn màu frame
+                  </h2>
+                  {selectedFrame && (
+                    <span
+                      className={`rounded-full border-2 border-black bg-white px-2 py-1 text-[10px] font-black uppercase sm:text-xs ${selectedFrame.textColor}`}
+                    >
+                      {selectedFrame.name}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {FRAME_STYLES.map((frame) => (
+                    <button
+                      key={frame.id}
+                      type="button"
+                      aria-pressed={frameStyle === frame.id}
+                      onClick={() => setFrameStyle(frame.id)}
+                      className={`flex min-h-16 items-center justify-center rounded-xl border-2 border-black px-2 py-2 text-center text-xs font-black transition-all sm:min-h-20 sm:text-sm ${frame.background} ${
+                        frameStyle === frame.id
+                          ? "ring-4 ring-white ring-offset-2 ring-offset-black"
+                          : "hover:-translate-y-0.5"
+                      }`}
+                    >
+                      {frame.name}
+                    </button>
+                  ))}
+                </div>
+
+                <p className={`mt-3 text-[11px] font-bold ${selectedFrame.textColor}`}>
+                  Frame đã chọn sẽ được giữ khi chuyển sang màn hình chụp.
+                </p>
+              </section>
+
+              <section
+                aria-labelledby="timer-heading"
+                className="mb-6 w-full rounded-2xl border-3 border-black bg-white p-3 shadow-[4px_4px_0px_0px_#000] sm:p-4"
+              >
+                <h2
+                  id="timer-heading"
+                  className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide sm:text-base"
+                >
+                  <Settings size={18} />
+                  Thời gian đếm ngược
+                </h2>
+                <div
+                  role="group"
+                  aria-label="Chọn thời gian đếm ngược"
+                  className="grid grid-cols-3 gap-2"
+                >
+                  {TIMER_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={timer === option}
+                      onClick={() => setTimer(option)}
+                      className={`rounded-xl border-2 border-black px-3 py-3 text-sm font-black transition-all ${
+                        timer === option
+                          ? "bg-yellow-300 shadow-[3px_3px_0px_0px_#000] -translate-y-0.5"
+                          : "bg-zinc-100 hover:bg-yellow-100"
+                      }`}
+                    >
+                      {option} giây
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs font-semibold text-zinc-600">
+                  Áp dụng cho mỗi lần chụp và chụp lại.
+                </p>
+              </section>
 
               <Link
                 href={`/capture?mode=${cutMode}`}

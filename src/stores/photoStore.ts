@@ -1,44 +1,88 @@
 import { create } from "zustand";
-export type CutMode = "2cut" | "4cut";
-interface PhotoState {
-  // Capture
-  cutMode: CutMode;
-  photos: string[];
+import type {
+  CutMode,
+  FilterConfig,
+  FilterStyle,
+  FrameConfig,
+  FrameStyle,
+  PhotoStoreState,
+  TimerOption,
+} from "@/types";
 
-  // Edit
-  frameBg: string;
-  frameText: string;
-  filter: string;
-  customText: string;
+const FRAME_CONFIGS: Record<FrameStyle, FrameConfig> = {
+  "y2k-pink": {
+    id: "y2k-pink",
+    name: "Y2K Pink",
+    background: "bg-pink-300",
+    textColor: "text-pink-900",
+    accentColor: "#ec4899",
+  },
+  "cyber-cyan": {
+    id: "cyber-cyan",
+    name: "Cyber Cyan",
+    background: "bg-cyan-300",
+    textColor: "text-cyan-950",
+    accentColor: "#06b6d4",
+  },
+  "neon-yellow": {
+    id: "neon-yellow",
+    name: "Neon Yellow",
+    background: "bg-yellow-300",
+    textColor: "text-yellow-950",
+    accentColor: "#eab308",
+  },
+  "retro-black": {
+    id: "retro-black",
+    name: "Retro Black",
+    background: "bg-zinc-900",
+    textColor: "text-pink-400",
+    accentColor: "#f472b6",
+  },
+};
 
-  // Result
-  finalImage: string | null;
+export const FRAME_STYLES = Object.values(FRAME_CONFIGS);
+export const getFrameConfig = (style: FrameStyle) => FRAME_CONFIGS[style];
 
-  // Actions
-  setCutMode: (mode: CutMode) => void;
+export const FILTER_STYLES: Record<
+  FilterStyle,
+  FilterConfig
+> = {
+  none: {
+    id: "none",
+    name: "Normal",
+    className: "filter-none",
+    filter: "none",
+  },
+  vintage: {
+    id: "vintage",
+    name: "Y2K Film",
+    className: "filter-vintage",
+    filter: "sepia(0.3) contrast(1.1) saturate(1.3) hue-rotate(-10deg)",
+  },
+  bw: {
+    id: "bw",
+    name: "B&W Film",
+    className: "filter-bw",
+    filter: "grayscale(1) contrast(1.2)",
+  },
+  pop: {
+    id: "pop",
+    name: "Pop Punch",
+    className: "filter-pop",
+    filter: "saturate(1.45) contrast(1.15) hue-rotate(8deg)",
+  },
+};
 
-  addPhoto: (photo: string) => void;
-  replacePhoto: (index: number, photo: string) => void;
-  removePhoto: (index: number) => void;
-
-  setFrame: (bg: string, text: string) => void;
-  setFilter: (filter: string) => void;
-  setCustomText: (text: string) => void;
-  setFinalImage: (image: string | null) => void;
-
-  clearPhotos: () => void;
-  clearSession: () => void;
-}
 const INITIAL_STATE = {
   cutMode: "4cut" as CutMode,
   photos: [],
-  frameBg: "bg-pink-300",
-  frameText: "text-pink-900",
-  filter: "none",
+  frameStyle: "y2k-pink" as FrameStyle,
+  filterStyle: "none" as FilterStyle,
   customText: "Y2K_LIFE4CUT",
+  timer: 3 as TimerOption,
   finalImage: null,
 };
-export const usePhotoStore = create<PhotoState>((set) => ({
+export const usePhotoStore = create<PhotoStoreState>((set) => ({
   ...INITIAL_STATE,
 
   // Capture
@@ -66,14 +110,11 @@ export const usePhotoStore = create<PhotoState>((set) => ({
     })),
 
   // Edit
-  setFrame: (bg, text) =>
+  setFrameStyle: (style) => set({ frameStyle: style }),
+  setFilterStyle: (style) => set({ filterStyle: style }),
+  setTimer: (timer) =>
     set({
-      frameBg: bg,
-      frameText: text,
-    }),
-  setFilter: (filter) =>
-    set({
-      filter,
+      timer,
     }),
   setCustomText: (customText) =>
     set({

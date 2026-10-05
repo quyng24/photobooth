@@ -1,9 +1,4 @@
-export interface RenderPhotoStripOptions {
-  photos: string[];
-  frameBg: string;
-  filter: string;
-  customText: string;
-}
+import type { RenderPhotoStripOptions } from "@/types";
 
 const FRAME_COLORS: Record<string, string> = {
   "bg-pink-300": "#f9a8d4",

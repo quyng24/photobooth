@@ -16,7 +16,7 @@ import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
 import { Y2kShell } from "@/components/y2k/Y2kShell";
 import { Y2kSteps } from "@/components/y2k/Y2kSteps";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
-import { usePhotoStore } from "@/stores/photoStore";
+import { getFrameConfig, usePhotoStore } from "@/stores/photoStore";
 import { imageUrlToDataUrl } from "@/utils/utils";
 
 const SAMPLE_PHOTOS = [
@@ -55,11 +55,14 @@ export default function CapturePage() {
   const {
     cutMode,
     photos,
+    frameStyle,
+    timer,
     addPhoto,
     replacePhoto,
     clearPhotos,
   } = usePhotoStore();
 
+  const selectedFrame = getFrameConfig(frameStyle);
   const photoCount = cutMode === "2cut" ? 2 : 4;
 
   const stopCamera = useCallback(() => {
@@ -340,7 +343,7 @@ export default function CapturePage() {
 
   const runCountdown = (): Promise<boolean> => {
     return new Promise((resolve) => {
-      let count = 3;
+      let count = timer;
       setCountdown(count);
 
       const interval = setInterval(() => {
@@ -608,8 +611,16 @@ export default function CapturePage() {
           CHỌN KHUNG
         </Link>
         <Y2kSteps current={2} />
-        <div className="hidden rounded-xl border-2 border-black bg-cyan-300 px-3 py-1.5 text-xs font-black uppercase shadow-[3px_3px_0px_0px_#000] sm:block">
-          {cutMode === "2cut" ? "2-CUT" : "4-CUT"}
+        <div className="flex items-center gap-2">
+          <div
+            aria-label={`Frame đã chọn: ${selectedFrame?.name ?? frameStyle}`}
+            className={`hidden rounded-xl border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-[3px_3px_0px_0px_#000] sm:block ${selectedFrame.background} ${selectedFrame.textColor}`}
+          >
+            {selectedFrame?.name ?? frameStyle}
+          </div>
+          <div className="hidden rounded-xl border-2 border-black bg-cyan-300 px-3 py-1.5 text-xs font-black uppercase shadow-[3px_3px_0px_0px_#000] sm:block">
+            {cutMode === "2cut" ? "2-CUT" : "4-CUT"}
+          </div>
         </div>
       </div>
 
@@ -648,7 +659,11 @@ export default function CapturePage() {
                       : "bg-gray-400"
                 }`}
               />
-              <span className="text-white text-xs font-bold font-mono tracking-wider">
+              <span
+                role="status"
+                aria-live="polite"
+                className="text-white text-xs font-bold font-mono tracking-wider"
+              >
                 {isCapturing
                   ? "REC"
                   : cameraStatus === "ready"
@@ -710,6 +725,9 @@ export default function CapturePage() {
             {countdown !== null && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] z-30">
                 <span
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
                   className="text-[140px] font-black text-yellow-400 animate-bounce drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] select-none"
                   style={{ WebkitTextStroke: "4px black" }}
                 >
@@ -729,47 +747,52 @@ export default function CapturePage() {
               </span>
             </div>
 
-            <div className={`grid ${photoCount === 2 ? "grid-cols-2" : "grid-cols-4"} gap-2`}>
-              {slotItems.map((photo, index) => (
-                <div
-                  key={photo ? `${index}-${photo.slice(0, 32)}` : `empty-${index}`}
-                  className="relative group rounded-xl border-2 border-black overflow-hidden bg-white shadow-[3px_3px_0px_0px_#000] min-h-16"
-                >
-                  {photo ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={photo}
-                        alt={`Photo ${index + 1}`}
-                        className="w-full aspect-4/3 object-cover block"
-                      />
-                      <div className="absolute top-1 left-1 bg-black text-white text-[10px] font-black px-1.5 py-0.5 rounded">
-                        0{index + 1}
+            <div className={`rounded-xl border-2 border-black p-2 shadow-[3px_3px_0px_0px_#000] ${selectedFrame.background}`}>
+              <div className={`mb-2 border-b border-dashed border-black/40 pb-1 text-center font-mono text-[10px] font-black uppercase ${selectedFrame.textColor}`}>
+                {selectedFrame?.name ?? frameStyle}
+              </div>
+              <div className={`grid ${photoCount === 2 ? "grid-cols-2" : "grid-cols-4"} gap-2`}>
+                {slotItems.map((photo, index) => (
+                  <div
+                    key={photo ? `${index}-${photo.slice(0, 32)}` : `empty-${index}`}
+                    className="relative group rounded-xl border-2 border-black overflow-hidden bg-white shadow-[3px_3px_0px_0px_#000] min-h-16"
+                  >
+                    {photo ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photo}
+                          alt={`Photo ${index + 1}`}
+                          className="w-full aspect-4/3 object-cover block"
+                        />
+                        <div className="absolute top-1 left-1 bg-black text-white text-[10px] font-black px-1.5 py-0.5 rounded">
+                          0{index + 1}
+                        </div>
+                        <button
+                          onClick={() => startRetake(index)}
+                          disabled={isCapturing}
+                          className={`absolute inset-x-1 bottom-1 py-1 bg-pink-400 hover:bg-pink-300 border-2 border-black text-black text-[10px] font-black rounded shadow-sm transition-all cursor-pointer ${
+                            retakeIndex === index
+                              ? "opacity-100 bg-yellow-300"
+                              : "opacity-90 sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40"
+                          }`}
+                        >
+                          {retakeIndex === index ? "ĐANG CHỤP..." : "RETAKE"}
+                        </button>
+                      </>
+                    ) : (
+                      <div className="aspect-4/3 flex flex-col items-center justify-center bg-pink-50 border-dashed">
+                        <span className="font-mono text-[10px] font-black text-zinc-400">
+                          0{index + 1}
+                        </span>
+                        <span className="text-[9px] font-bold text-zinc-400 uppercase">
+                          waiting
+                        </span>
                       </div>
-                      <button
-                        onClick={() => startRetake(index)}
-                        disabled={isCapturing}
-                        className={`absolute inset-x-1 bottom-1 py-1 bg-pink-400 hover:bg-pink-300 border-2 border-black text-black text-[10px] font-black rounded shadow-sm transition-all cursor-pointer ${
-                          retakeIndex === index
-                            ? "opacity-100 bg-yellow-300"
-                            : "opacity-90 sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40"
-                        }`}
-                      >
-                        {retakeIndex === index ? "ĐANG CHỤP..." : "RETAKE"}
-                      </button>
-                    </>
-                  ) : (
-                    <div className="aspect-4/3 flex flex-col items-center justify-center bg-pink-50 border-dashed">
-                      <span className="font-mono text-[10px] font-black text-zinc-400">
-                        0{index + 1}
-                      </span>
-                      <span className="text-[9px] font-bold text-zinc-400 uppercase">
-                        waiting
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

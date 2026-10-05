@@ -9,24 +9,29 @@ Photobooth 4-cut chạy trên trình duyệt, cho phép chụp ảnh bằng webc
 Luồng cốt lõi từ trang chủ đến ảnh thành phẩm đã hoạt động:
 
 - Chọn bố cục ảnh 2-cut hoặc 4-cut.
-- Chụp bằng camera với đếm ngược; có thể chụp lại từng ảnh hoặc chụp lại cả bộ.gg
+- Chụp bằng camera với đếm ngược; có thể chụp lại từng ảnh.
 - Chuyển sang mock mode để trải nghiệm khi camera không khả dụng hoặc không được cấp quyền.
 - Trang trí dải ảnh với màu khung, filter và chữ ký tùy chỉnh.
 - Xem trước, kết xuất ảnh PNG, tải xuống và chia sẻ qua tính năng chia sẻ của trình duyệt nếu được hỗ trợ.
 - Bắt đầu phiên mới và xóa dữ liệu phiên hiện tại.
 - Kiểm thử E2E cho luồng chọn 2-cut, chụp, chỉnh sửa, xuất/tải ảnh và bắt đầu lại.
 
-## Lộ trình phát triển
-
 ### Phase 2 — Photo Booth Experience
 
-Tập trung làm cho trải nghiệm chụp ảnh liền mạch, thú vị và gần với một photobooth thực tế:
+**Trạng thái: Hoàn thành phần triển khai chính.** Camera vật lý và đổi camera trước/sau vẫn cần được xác nhận thủ công trên thiết bị mục tiêu.
 
-- Tinh chỉnh giao diện và hướng dẫn trong lúc chụp: trạng thái camera, đếm ngược, hiệu ứng flash và phản hồi sau mỗi ảnh.
-- Cải thiện trải nghiệm camera trên desktop và mobile, bao gồm đổi camera trước/sau khi thiết bị hỗ trợ.
-- Làm thao tác chụp lại và quản lý từng khung ảnh trực quan hơn.
-- Mở rộng lựa chọn bố cục, màu sắc và template; bảo đảm preview phản ánh chính xác ảnh xuất.
-- Kiểm tra độ ổn định, khả năng truy cập và hiển thị trên nhiều kích thước màn hình.
+- [x] Hiển thị trạng thái camera, đếm ngược, flash và tiến trình chụp.
+- [x] Hỗ trợ camera trước/sau trên thiết bị di động khi trình duyệt và thiết bị cho phép.
+- [x] Cho phép chụp lại từng ảnh trong dải.
+- [x] Cho phép chọn bố cục 2-cut/4-cut và frame ở trang setup; lựa chọn được giữ khi sang capture.
+- [x] Cho phép chọn thời gian đếm ngược 3, 5 hoặc 10 giây; áp dụng cho chụp mới và retake.
+- [x] Cho phép chọn filter; preview dùng CSS trên ảnh gốc và filter chỉ được áp dụng khi xuất PNG.
+- [x] Có mock mode để trải nghiệm khi camera không khả dụng hoặc bị từ chối quyền.
+- [x] Bổ sung trạng thái truy cập được cho các lựa chọn và countdown; kiểm tra bố cục setup/capture ở viewport mobile bằng E2E.
+- [x] Mở rộng E2E cho 2-cut/4-cut, timer, retake, filter preview, camera bị từ chối quyền, mock mode, xuất/tải ảnh và reset.
+- [ ] Kiểm thử camera thật, đổi camera và trải nghiệm trình duyệt trên nhiều thiết bị mục tiêu.
+
+## Lộ trình phát triển
 
 ### Phase 3 — Social / Advanced
 
@@ -37,7 +42,7 @@ Mở rộng từ trải nghiệm cá nhân sang chia sẻ và các tính năng n
 - Bổ sung thư viện lưu/xem lại ảnh hoặc phiên chụp, với lựa chọn lưu trữ phù hợp.
 - Khám phá thêm template, sticker, tùy chỉnh nâng cao và các tính năng cộng đồng.
 
-Các mục trong Phase 2 và Phase 3 là mục tiêu dự kiến, chưa phải tính năng đã phát hành.
+Phase 2 đã hoàn thiện phần triển khai chính; kiểm thử camera vật lý và tương thích đa thiết bị vẫn là xác nhận thủ công. Các mục Phase 3 là mục tiêu dự kiến, chưa phải tính năng đã phát hành.
 
 ## Bắt đầu
 
@@ -58,13 +63,13 @@ Cài Chromium cho Playwright một lần:
 npx playwright install chromium
 ```
 
-Chạy bài kiểm thử luồng photobooth:
+Chạy các bài kiểm thử luồng photobooth:
 
 ```bash
 npm run test:e2e
 ```
 
-Test tự khởi động ứng dụng và sử dụng camera giả lập của Chromium; không cần webcam thật.
+Test tự khởi động ứng dụng và sử dụng camera giả lập của Chromium; không cần webcam thật. Các kịch bản bao gồm 2-cut/4-cut, giữ frame, timer, retake, filter không làm thay đổi ảnh gốc, xử lý từ chối quyền camera bằng mock mode, xuất PNG/tải ảnh, reset và kiểm tra tràn ngang ở viewport hẹp.
 
 ## Công nghệ
 

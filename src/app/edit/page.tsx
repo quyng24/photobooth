@@ -10,7 +10,7 @@ import {
   ArrowLeft,
   Type,
 } from "lucide-react";
-import { usePhotoStore } from "@/stores/photoStore";
+import { FILTER_STYLES, FRAME_STYLES, getFrameConfig, usePhotoStore } from "@/stores/photoStore";
 import { renderPhotoStrip } from "@/lib/renderPhotoStrip";
 import { Y2kShell } from "@/components/y2k/Y2kShell";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
@@ -18,42 +18,21 @@ import { Y2kSteps } from "@/components/y2k/Y2kSteps";
 import { Y2kMarquee } from "@/components/y2k/Y2kMarquee";
 import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
 
-const FRAME_STYLES = [
-  { id: "pink", name: "Y2K Pink", bg: "bg-pink-300", text: "text-pink-900" },
-  { id: "cyan", name: "Cyber Cyan", bg: "bg-cyan-300", text: "text-cyan-950" },
-  { id: "yellow", name: "Neon Yellow", bg: "bg-yellow-300", text: "text-yellow-950" },
-  { id: "dark", name: "Retro Black", bg: "bg-zinc-900", text: "text-pink-400" },
-];
-
-const FILTER_STYLES = [
-  { id: "none", name: "Normal", filter: "none" },
-  {
-    id: "vintage",
-    name: "Y2K Film",
-    filter: "sepia(0.3) contrast(1.1) saturate(1.3) hue-rotate(-10deg)",
-  },
-  { id: "bw", name: "B&W Film", filter: "grayscale(1) contrast(1.2)" },
-  {
-    id: "pop",
-    name: "Pop Punch",
-    filter: "saturate(1.45) contrast(1.15) hue-rotate(8deg)",
-  },
-];
-
 export default function EditPage() {
   const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
   const {
     photos,
-    frameBg,
-    frameText,
-    setFrame,
-    filter,
-    setFilter,
+    frameStyle,
+    setFrameStyle,
+    filterStyle,
+    setFilterStyle,
     customText,
     setCustomText,
     setFinalImage,
   } = usePhotoStore();
+  const selectedFilter = FILTER_STYLES[filterStyle];
+  const selectedFrame = getFrameConfig(frameStyle);
 
   const handleExport = async () => {
     try {
@@ -61,8 +40,8 @@ export default function EditPage() {
 
       const finalImage = await renderPhotoStrip({
         photos,
-        frameBg,
-        filter,
+        frameBg: selectedFrame.background,
+        filter: selectedFilter.filter,
         customText,
       });
 
@@ -135,13 +114,19 @@ export default function EditPage() {
               <label className="text-sm font-black uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Palette className="w-5 h-5 text-purple-600" /> Chọn Màu Khung
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div
+                role="group"
+                aria-label="Chọn màu khung"
+                className="grid grid-cols-2 md:grid-cols-4 gap-3"
+              >
                 {FRAME_STYLES.map((f) => (
                   <button
                     key={f.id}
-                    onClick={() => setFrame(f.bg, f.text)}
-                    className={`p-3 text-xs font-bold rounded-xl border-2 border-black text-center transition-all ${f.bg} ${
-                      frameBg === f.bg ? "ring-4 ring-black scale-105" : "hover:scale-105"
+                    type="button"
+                    aria-pressed={frameStyle === f.id}
+                    onClick={() => setFrameStyle(f.id)}
+                    className={`p-3 text-xs font-bold rounded-xl border-2 border-black text-center transition-all ${f.background} ${
+                      frameStyle === f.id ? "ring-4 ring-black scale-105" : "hover:scale-105"
                     }`}
                   >
                     {f.name}
@@ -154,13 +139,19 @@ export default function EditPage() {
               <label className="flex text-sm font-black uppercase tracking-wider mb-3 items-center gap-2">
                 <Wand2 className="w-5 h-5 text-pink-500" /> Chọn Filter
               </label>
-              <div className="flex flex-wrap gap-2">
-                {FILTER_STYLES.map((ft) => (
+              <div
+                role="group"
+                aria-label="Chọn filter"
+                className="flex flex-wrap gap-2"
+              >
+                {Object.values(FILTER_STYLES).map((ft) => (
                   <button
                     key={ft.id}
-                    onClick={() => setFilter(ft.filter)}
+                    type="button"
+                    aria-pressed={filterStyle === ft.id}
+                    onClick={() => setFilterStyle(ft.id)}
                     className={`px-4 py-2 text-xs font-bold rounded-full border-2 border-black transition-all ${
-                      filter === ft.filter ? "bg-black text-white" : "bg-white hover:bg-zinc-100"
+                      filterStyle === ft.id ? "bg-black text-white" : "bg-white hover:bg-zinc-100"
                     }`}
                   >
                     {ft.name}
@@ -208,7 +199,7 @@ export default function EditPage() {
             </div>
             <div className="relative">
               <div
-                className={`relative p-4 rounded-xl border-4 border-black shadow-[12px_12px_0px_0px_#000] w-75 transition-all ${frameBg}`}
+                className={`relative p-4 rounded-xl border-4 border-black shadow-[12px_12px_0px_0px_#000] w-75 transition-all ${selectedFrame.background}`}
               >
                 <div className="text-center mb-3 pb-2 border-b-2 border-dashed border-black/40">
                   <span className="font-black text-xs uppercase tracking-widest block">
@@ -225,8 +216,7 @@ export default function EditPage() {
                       <img
                         src={imgSrc}
                         alt={`Snap ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        style={{ filter: filter }}
+                        className={`w-full h-full object-cover ${selectedFilter.className}`}
                       />
                       <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] font-mono px-1 rounded">
                         0{index + 1}
@@ -235,7 +225,7 @@ export default function EditPage() {
                   ))}
                 </div>
                 <div className="mt-4 pt-2 border-t-2 border-dashed border-black/40 text-center">
-                  <p className={`font-mono font-black text-sm tracking-wider uppercase ${frameText}`}>
+                  <p className={`font-mono font-black text-sm tracking-wider uppercase ${selectedFrame.textColor}`}>
                     {customText}
                   </p>
                 </div>
