@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Y2K Snapbooth
 
-## Getting Started
+Photobooth 4-cut chạy trên trình duyệt, cho phép chụp ảnh bằng webcam, trang trí dải ảnh và tải hoặc chia sẻ thành phẩm. Giao diện lấy cảm hứng từ phong cách Y2K.
 
-First, run the development server:
+## Trạng thái dự án
+
+**Phase 1 — Core MVP: Hoàn thành**
+
+Luồng cốt lõi từ trang chủ đến ảnh thành phẩm đã hoạt động:
+
+- Chọn bố cục ảnh 2-cut hoặc 4-cut.
+- Chụp bằng camera với đếm ngược; có thể chụp lại từng ảnh hoặc chụp lại cả bộ.gg
+- Chuyển sang mock mode để trải nghiệm khi camera không khả dụng hoặc không được cấp quyền.
+- Trang trí dải ảnh với màu khung, filter và chữ ký tùy chỉnh.
+- Xem trước, kết xuất ảnh PNG, tải xuống và chia sẻ qua tính năng chia sẻ của trình duyệt nếu được hỗ trợ.
+- Bắt đầu phiên mới và xóa dữ liệu phiên hiện tại.
+- Kiểm thử E2E cho luồng chọn 2-cut, chụp, chỉnh sửa, xuất/tải ảnh và bắt đầu lại.
+
+## Lộ trình phát triển
+
+### Phase 2 — Photo Booth Experience
+
+Tập trung làm cho trải nghiệm chụp ảnh liền mạch, thú vị và gần với một photobooth thực tế:
+
+- Tinh chỉnh giao diện và hướng dẫn trong lúc chụp: trạng thái camera, đếm ngược, hiệu ứng flash và phản hồi sau mỗi ảnh.
+- Cải thiện trải nghiệm camera trên desktop và mobile, bao gồm đổi camera trước/sau khi thiết bị hỗ trợ.
+- Làm thao tác chụp lại và quản lý từng khung ảnh trực quan hơn.
+- Mở rộng lựa chọn bố cục, màu sắc và template; bảo đảm preview phản ánh chính xác ảnh xuất.
+- Kiểm tra độ ổn định, khả năng truy cập và hiển thị trên nhiều kích thước màn hình.
+
+### Phase 3 — Social / Advanced
+
+Mở rộng từ trải nghiệm cá nhân sang chia sẻ và các tính năng nâng cao:
+
+- Hoàn thiện trải nghiệm chia sẻ ảnh và tối ưu thành phẩm cho các nền tảng xã hội.
+- Cân nhắc tạo QR hoặc liên kết chia sẻ để mở ảnh trên thiết bị khác.
+- Bổ sung thư viện lưu/xem lại ảnh hoặc phiên chụp, với lựa chọn lưu trữ phù hợp.
+- Khám phá thêm template, sticker, tùy chỉnh nâng cao và các tính năng cộng đồng.
+
+Các mục trong Phase 2 và Phase 3 là mục tiêu dự kiến, chưa phải tính năng đã phát hành.
+
+## Bắt đầu
+
+Yêu cầu Node.js tương thích với Next.js 16.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000). Để chụp bằng webcam, hãy mở ứng dụng trong môi trường trình duyệt hỗ trợ camera và cấp quyền truy cập khi được hỏi. Nếu không có camera, có thể dùng mock mode trên trang chụp.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Kiểm thử E2E
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Cài Chromium cho Playwright một lần:
 
-## Learn More
+```bash
+npx playwright install chromium
+```
 
-To learn more about Next.js, take a look at the following resources:
+Chạy bài kiểm thử luồng photobooth:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run test:e2e
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Test tự khởi động ứng dụng và sử dụng camera giả lập của Chromium; không cần webcam thật.
 
-## Deploy on Vercel
+## Công nghệ
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16, React 19 và TypeScript
+- Tailwind CSS
+- Zustand để quản lý trạng thái phiên chụp
+- Playwright cho kiểm thử E2E
