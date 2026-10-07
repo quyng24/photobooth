@@ -10,8 +10,18 @@ import {
   ArrowLeft,
   Type,
 } from "lucide-react";
-import { FILTER_STYLES, FRAME_STYLES, getFrameConfig, usePhotoStore } from "@/stores/photoStore";
+import {
+  FILTER_STYLES,
+  FRAME_STICKERS,
+  FRAME_STYLES,
+  getFrameConfig,
+  SIGNATURE_COLORS,
+  SIGNATURE_FONTS,
+  SIGNATURE_STICKERS,
+  usePhotoStore,
+} from "@/stores/photoStore";
 import { renderPhotoStrip } from "@/lib/renderPhotoStrip";
+import { formatSignatureLabel } from "@/lib/formatSignatureLabel";
 import { Y2kShell } from "@/components/y2k/Y2kShell";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
 import { Y2kSteps } from "@/components/y2k/Y2kSteps";
@@ -29,10 +39,30 @@ export default function EditPage() {
     setFilterStyle,
     customText,
     setCustomText,
+    signatureFont,
+    setSignatureFont,
+    signatureColor,
+    setSignatureColor,
+    signatureSize,
+    setSignatureSize,
+    stickerId,
+    setStickerId,
+    stickerPosition,
+    setStickerPosition,
     setFinalImage,
   } = usePhotoStore();
   const selectedFilter = FILTER_STYLES[filterStyle];
   const selectedFrame = getFrameConfig(frameStyle);
+  const selectedSignatureColor =
+    SIGNATURE_COLORS[signatureColor].hex ?? selectedFrame.textHexColor;
+  const previewScale = 268 / 800;
+  const previewSignatureFontSize = signatureSize * previewScale;
+  const selectedSticker = SIGNATURE_STICKERS[stickerId].emoji;
+  const signatureLabel = formatSignatureLabel(
+    customText,
+    selectedSticker,
+    stickerPosition,
+  );
 
   const handleExport = async () => {
     try {
@@ -43,6 +73,11 @@ export default function EditPage() {
         frameBg: selectedFrame.background,
         filter: selectedFilter.filter,
         customText,
+        signatureColor: selectedSignatureColor,
+        signatureFontFamily: SIGNATURE_FONTS[signatureFont].family,
+        signatureSize,
+        sticker: selectedSticker,
+        stickerPosition,
       });
 
       setFinalImage(finalImage);
@@ -178,6 +213,165 @@ export default function EditPage() {
               </div>
             </div>
 
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-black uppercase tracking-wider">
+                Kiểu chữ
+              </legend>
+              <div
+                role="group"
+                aria-label="Kiểu chữ chữ ký"
+                className="flex flex-wrap gap-2"
+              >
+                {(["mono", "sans", "serif"] as const).map((id) => {
+                  const font = SIGNATURE_FONTS[id];
+
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={signatureFont === id}
+                      onClick={() => setSignatureFont(id)}
+                      className={`rounded-lg border-2 border-black px-4 py-2 text-sm font-bold ${
+                        signatureFont === id
+                          ? "bg-black text-white"
+                          : "bg-white hover:bg-zinc-100"
+                      }`}
+                    >
+                      {font.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-black uppercase tracking-wider">
+                Màu chữ ký
+              </legend>
+              <div
+                role="group"
+                aria-label="Màu chữ ký"
+                className="flex flex-wrap gap-2"
+              >
+                {(["frame", "pink", "cyan", "yellow", "white"] as const).map(
+                  (id) => {
+                    const color = SIGNATURE_COLORS[id];
+                    const hex = color.hex ?? selectedFrame.textHexColor;
+
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-label={`Màu chữ ký ${color.name}`}
+                        aria-pressed={signatureColor === id}
+                        onClick={() => setSignatureColor(id)}
+                        className={`h-10 min-w-10 rounded-lg border-2 border-black px-2 text-xs font-bold ${
+                          signatureColor === id ? "ring-4 ring-black" : ""
+                        }`}
+                        style={{
+                          backgroundColor: hex,
+                          color: hex === "#ffffff" ? "#18181b" : "#ffffff",
+                        }}
+                      >
+                        {color.name}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+            </fieldset>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="signature-size"
+                className="flex items-center justify-between text-sm font-black uppercase tracking-wider"
+              >
+                <span>Cỡ chữ ký</span>
+                <span>{signatureSize} px</span>
+              </label>
+              <input
+                id="signature-size"
+                type="range"
+                min={28}
+                max={64}
+                step={4}
+                value={signatureSize}
+                onChange={(event) =>
+                  setSignatureSize(Number(event.currentTarget.value))
+                }
+                aria-label="Kích thước chữ ký"
+                className="w-full accent-black"
+              />
+            </div>
+
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-black uppercase tracking-wider">
+                Sticker trang trí
+              </legend>
+              <div
+                role="group"
+                aria-label="Chọn sticker"
+                className="flex flex-wrap gap-2"
+              >
+                {(
+                  ["none", "sparkle", "star", "heart", "flower"] as const
+                ).map((id) => {
+                  const sticker = SIGNATURE_STICKERS[id];
+
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-label={`Sticker ${sticker.name}`}
+                      aria-pressed={stickerId === id}
+                      onClick={() => setStickerId(id)}
+                      className={`min-h-11 min-w-11 rounded-lg border-2 border-black px-3 py-2 font-bold ${
+                        stickerId === id
+                          ? "bg-black text-white ring-2 ring-black ring-offset-2"
+                          : "bg-white hover:bg-zinc-100"
+                      }`}
+                    >
+                      {sticker.emoji ?? sticker.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <fieldset
+              className="space-y-3"
+              disabled={!selectedSticker}
+            >
+              <legend className="text-sm font-black uppercase tracking-wider">
+                Vị trí sticker
+              </legend>
+              <div
+                role="group"
+                aria-label="Vị trí sticker"
+                className="flex flex-wrap gap-2"
+              >
+                {(["before", "after", "both"] as const).map((position) => (
+                  <button
+                    key={position}
+                    type="button"
+                    aria-pressed={stickerPosition === position}
+                    onClick={() => setStickerPosition(position)}
+                    className={`rounded-lg border-2 border-black px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${
+                      stickerPosition === position
+                        ? "bg-black text-white"
+                        : "bg-white hover:bg-zinc-100"
+                    }`}
+                  >
+                    {position === "before"
+                      ? "Trước chữ ký"
+                      : position === "after"
+                        ? "Sau chữ ký"
+                        : "Cả 2 đầu"}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
             <div className="pt-4 border-t-3 border-black">
               <button
                 onClick={handleExport}
@@ -201,8 +395,29 @@ export default function EditPage() {
               <div
                 className={`relative p-4 rounded-xl border-4 border-black shadow-[12px_12px_0px_0px_#000] w-75 transition-all ${selectedFrame.background}`}
               >
-                <div className="text-center mb-3 pb-2 border-b-2 border-dashed border-black/40">
-                  <span className="font-black text-xs uppercase tracking-widest block">
+                <div
+                  className="relative mb-3 flex items-center justify-center border-b border-dashed border-black/40"
+                  style={{ height: `${70 * previewScale}px` }}
+                >
+                  {FRAME_STICKERS.map((sticker) => (
+                    <span
+                      key={`${sticker.emoji}-${sticker.x}`}
+                      data-testid="fixed-frame-sticker"
+                      aria-hidden="true"
+                      className="absolute -translate-x-1/2 -translate-y-1/2 leading-none"
+                      style={{
+                        left: `${(sticker.x / 800) * 100}%`,
+                        top: `${((sticker.y - 40) / 70) * 100}%`,
+                        fontSize: `${sticker.fontSize * previewScale}px`,
+                      }}
+                    >
+                      {sticker.emoji}
+                    </span>
+                  ))}
+                  <span
+                    className="font-black uppercase tracking-widest"
+                    style={{ fontSize: `${24 * previewScale}px` }}
+                  >
                     ★ Y2K SNAP ★
                   </span>
                 </div>
@@ -225,8 +440,18 @@ export default function EditPage() {
                   ))}
                 </div>
                 <div className="mt-4 pt-2 border-t-2 border-dashed border-black/40 text-center">
-                  <p className={`font-mono font-black text-sm tracking-wider uppercase ${selectedFrame.textColor}`}>
-                    {customText}
+                  <p
+                    data-testid="signature-preview"
+                    className={`whitespace-nowrap font-black uppercase ${
+                      signatureColor === "frame" ? selectedFrame.textColor : ""
+                    }`}
+                    style={{
+                      color: selectedSignatureColor,
+                      fontFamily: SIGNATURE_FONTS[signatureFont].family,
+                      fontSize: `${previewSignatureFontSize}px`,
+                    }}
+                  >
+                    {signatureLabel}
                   </p>
                 </div>
               </div>

@@ -10,11 +10,27 @@ export type FrameStyle =
 
 export type FilterStyle = "none" | "vintage" | "bw" | "pop";
 
+export type SignatureFont = "mono" | "sans" | "serif";
+
+export type SignatureColor = "frame" | "pink" | "cyan" | "yellow" | "white";
+
+export type StickerId = "none" | "sparkle" | "star" | "heart" | "flower";
+
+export type StickerPosition = "before" | "after" | "both";
+
+export interface FrameStickerConfig {
+  emoji: string;
+  x: number;
+  y: number;
+  fontSize: number;
+}
+
 export interface FrameConfig {
   id: FrameStyle;
   name: string;
   background: string;
   textColor: string;
+  textHexColor: string;
   accentColor: string;
 }
 
@@ -32,6 +48,11 @@ export interface PhotoStoreState {
   frameStyle: FrameStyle;
   filterStyle: FilterStyle;
   customText: string;
+  signatureFont: SignatureFont;
+  signatureColor: SignatureColor;
+  signatureSize: number;
+  stickerId: StickerId;
+  stickerPosition: StickerPosition;
   timer: TimerOption;
 
   finalImage: string | null;
@@ -45,6 +66,11 @@ export interface PhotoStoreState {
   setFilterStyle: (style: FilterStyle) => void;
   setTimer: (timer: TimerOption) => void;
   setCustomText: (text: string) => void;
+  setSignatureFont: (font: SignatureFont) => void;
+  setSignatureColor: (color: SignatureColor) => void;
+  setSignatureSize: (size: number) => void;
+  setStickerId: (stickerId: StickerId) => void;
+  setStickerPosition: (position: StickerPosition) => void;
   setFinalImage: (image: string | null) => void;
 
   clearPhotos: () => void;
@@ -56,4 +82,9 @@ export interface RenderPhotoStripOptions {
   frameBg: string;
   filter: string;
   customText: string;
+  signatureColor: string;
+  signatureFontFamily: string;
+  signatureSize: number;
+  sticker: string | null;
+  stickerPosition: StickerPosition;
 }

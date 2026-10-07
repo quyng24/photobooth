@@ -1,4 +1,6 @@
 import type { RenderPhotoStripOptions } from "@/types";
+import { formatSignatureLabel } from "@/lib/formatSignatureLabel";
+import { FRAME_STICKERS } from "@/stores/photoStore";
 
 const FRAME_COLORS: Record<string, string> = {
   "bg-pink-300": "#f9a8d4",
@@ -23,6 +25,11 @@ export async function renderPhotoStrip({
   frameBg,
   filter,
   customText,
+  signatureColor,
+  signatureFontFamily,
+  signatureSize,
+  sticker,
+  stickerPosition,
 }: RenderPhotoStripOptions): Promise<string> {
   const FRAME_WIDTH = 800;
   const PHOTO_WIDTH = 720;
@@ -55,6 +62,11 @@ export async function renderPhotoStrip({
   ctx.textBaseline = "middle";
   ctx.font = "900 24px Arial";
   ctx.fillText("★ Y2K SNAP ★", FRAME_WIDTH / 2, PADDING + 30);
+  ctx.textAlign = "center";
+  for (const sticker of FRAME_STICKERS) {
+    ctx.font = `${sticker.fontSize}px Arial`;
+    ctx.fillText(sticker.emoji, sticker.x, sticker.y);
+  }
   // Header dashed line
   ctx.setLineDash([8, 8]);
   ctx.lineWidth = 2;
@@ -141,10 +153,15 @@ export async function renderPhotoStrip({
     "bg-yellow-300": "#713f12",
     "bg-zinc-900": "#f472b6",
   };
-  ctx.fillStyle = textColorMap[frameBg] ?? "#831843";
-  ctx.font = "900 24px monospace";
+  ctx.fillStyle = signatureColor || textColorMap[frameBg] || "#831843";
+  ctx.font = `900 ${signatureSize}px ${signatureFontFamily}`;
   ctx.textAlign = "center";
-  ctx.fillText(customText || "Y2K_LIFE4CUT", FRAME_WIDTH / 2, footerY + 10);
+  const signatureLabel = formatSignatureLabel(
+    customText,
+    sticker,
+    stickerPosition,
+  );
+  ctx.fillText(signatureLabel, FRAME_WIDTH / 2, footerY + 10);
   // =========================
   // Export PNG
   // =========================

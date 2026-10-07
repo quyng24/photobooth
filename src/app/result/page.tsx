@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePhotoStore } from "@/stores/photoStore";
 import Link from "next/link";
 import {
@@ -18,6 +19,8 @@ import { Y2kMarquee } from "@/components/y2k/Y2kMarquee";
 import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
 
 export default function ResultPage() {
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
   const { finalImage, clearSession } = usePhotoStore();
 
   const handleDownload = () => {
@@ -40,29 +43,42 @@ export default function ResultPage() {
       return;
     }
 
+    setShareMessage(null);
+
     try {
+      setIsSharing(true);
       const response = await fetch(finalImage);
       const blob = await response.blob();
       const file = new File([blob], `photobooth-${Date.now()}.png`, {
         type: "image/png",
       });
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: "My Photo Booth",
-          text: "Check out my photo!",
-          files: [file],
-        });
+      if (
+        typeof navigator.share !== "function" ||
+        typeof navigator.canShare !== "function" ||
+        !navigator.canShare({ files: [file] })
+      ) {
+        setShareMessage(
+          "Trình duyệt không hỗ trợ chia sẻ tệp. Bạn có thể tải ảnh PNG xuống thay thế.",
+        );
         return;
       }
 
-      alert("Trình duyệt không hỗ trợ chia sẻ trực tiếp. Bạn có thể tải ảnh xuống trước.");
+      await navigator.share({
+        title: "Y2K Snapbooth",
+        text: "Ảnh photobooth của mình ✨",
+        files: [file],
+      });
     } catch (error) {
       if ((error as DOMException)?.name === "AbortError") {
         return;
       }
       console.error("Share failed:", error);
-      alert("Không thể chia sẻ ảnh.");
+      setShareMessage(
+        "Không thể chia sẻ ảnh lúc này. Bạn có thể tải ảnh PNG xuống thay thế.",
+      );
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -182,15 +198,31 @@ export default function ResultPage() {
 
               <button
                 onClick={handleShare}
-                disabled={!finalImage}
+                disabled={!finalImage || isSharing}
                 className="group flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border-3 border-black bg-cyan-400 px-5 py-4 font-black text-lg text-black shadow-[4px_4px_0px_0px_#000] transition-all hover:bg-cyan-300 hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#000] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Share2
                   size={22}
                   className="group-hover:rotate-12 transition-transform"
                 />
-                CHIA SẺ NGAY
+                {isSharing ? "ĐANG CHIA SẺ..." : "CHIA SẺ NGAY"}
               </button>
+
+              {shareMessage && (
+                <div
+                  role="status"
+                  className="flex flex-col gap-3 rounded-xl border-2 border-black bg-yellow-100 p-4 text-sm font-bold"
+                >
+                  <p>{shareMessage}</p>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="w-full rounded-lg border-2 border-black bg-white px-4 py-3 text-sm font-black hover:bg-lime-200"
+                  >
+                    TẢI ẢNH THAY THẾ
+                  </button>
+                </div>
+              )}
 
               <div className="h-0.5 w-full my-1 rounded border-t-2 border-dashed border-zinc-300 bg-transparent"></div>
 

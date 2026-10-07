@@ -6,6 +6,10 @@ import type {
   FrameConfig,
   FrameStyle,
   PhotoStoreState,
+  SignatureColor,
+  SignatureFont,
+  StickerId,
+  StickerPosition,
   TimerOption,
 } from "@/types";
 
@@ -15,6 +19,7 @@ const FRAME_CONFIGS: Record<FrameStyle, FrameConfig> = {
     name: "Y2K Pink",
     background: "bg-pink-300",
     textColor: "text-pink-900",
+    textHexColor: "#831843",
     accentColor: "#ec4899",
   },
   "cyber-cyan": {
@@ -22,6 +27,7 @@ const FRAME_CONFIGS: Record<FrameStyle, FrameConfig> = {
     name: "Cyber Cyan",
     background: "bg-cyan-300",
     textColor: "text-cyan-950",
+    textHexColor: "#083344",
     accentColor: "#06b6d4",
   },
   "neon-yellow": {
@@ -29,6 +35,7 @@ const FRAME_CONFIGS: Record<FrameStyle, FrameConfig> = {
     name: "Neon Yellow",
     background: "bg-yellow-300",
     textColor: "text-yellow-950",
+    textHexColor: "#713f12",
     accentColor: "#eab308",
   },
   "retro-black": {
@@ -36,9 +43,46 @@ const FRAME_CONFIGS: Record<FrameStyle, FrameConfig> = {
     name: "Retro Black",
     background: "bg-zinc-900",
     textColor: "text-pink-400",
+    textHexColor: "#f472b6",
     accentColor: "#f472b6",
   },
 };
+
+export const SIGNATURE_FONTS: Record<
+  SignatureFont,
+  { name: string; family: string }
+> = {
+  mono: { name: "Mono", family: '"Courier New", monospace' },
+  sans: { name: "Sans", family: "Arial, Helvetica, sans-serif" },
+  serif: { name: "Serif", family: "Georgia, serif" },
+};
+
+export const SIGNATURE_COLORS: Record<
+  SignatureColor,
+  { name: string; hex: string | null }
+> = {
+  frame: { name: "Theo frame", hex: null },
+  pink: { name: "Hồng", hex: "#831843" },
+  cyan: { name: "Cyan", hex: "#083344" },
+  yellow: { name: "Vàng", hex: "#713f12" },
+  white: { name: "Trắng", hex: "#ffffff" },
+};
+
+export const SIGNATURE_STICKERS: Record<
+  StickerId,
+  { name: string; emoji: string | null }
+> = {
+  none: { name: "Không dùng", emoji: null },
+  sparkle: { name: "Lấp lánh", emoji: "✨" },
+  star: { name: "Ngôi sao", emoji: "⭐" },
+  heart: { name: "Trái tim", emoji: "💖" },
+  flower: { name: "Bông hoa", emoji: "🌸" },
+};
+
+export const FRAME_STICKERS = [
+  { emoji: "✨", x: 80, y: 75, fontSize: 36 },
+  { emoji: "💖", x: 720, y: 75, fontSize: 36 },
+] as const;
 
 export const FRAME_STYLES = Object.values(FRAME_CONFIGS);
 export const getFrameConfig = (style: FrameStyle) => FRAME_CONFIGS[style];
@@ -79,6 +123,11 @@ const INITIAL_STATE = {
   frameStyle: "y2k-pink" as FrameStyle,
   filterStyle: "none" as FilterStyle,
   customText: "Y2K_LIFE4CUT",
+  signatureFont: "mono" as SignatureFont,
+  signatureColor: "frame" as SignatureColor,
+  signatureSize: 40,
+  stickerId: "none" as StickerId,
+  stickerPosition: "before" as StickerPosition,
   timer: 3 as TimerOption,
   finalImage: null,
 };
@@ -120,6 +169,11 @@ export const usePhotoStore = create<PhotoStoreState>((set) => ({
     set({
       customText,
     }),
+  setSignatureFont: (signatureFont) => set({ signatureFont }),
+  setSignatureColor: (signatureColor) => set({ signatureColor }),
+  setSignatureSize: (signatureSize) => set({ signatureSize }),
+  setStickerId: (stickerId) => set({ stickerId }),
+  setStickerPosition: (stickerPosition) => set({ stickerPosition }),
 
   // Result
   setFinalImage: (image) =>

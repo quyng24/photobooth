@@ -4,7 +4,7 @@ Photobooth 4-cut chạy trên trình duyệt, cho phép chụp ảnh bằng webc
 
 ## Trạng thái dự án
 
-**Phase 1 — Core MVP: Hoàn thành**
+**MVP: Hoàn thành các tính năng trong ứng dụng; còn thiếu upload và liên kết/QR để mở ảnh trên thiết bị khác.**
 
 Luồng cốt lõi từ trang chủ đến ảnh thành phẩm đã hoạt động:
 
@@ -12,6 +12,7 @@ Luồng cốt lõi từ trang chủ đến ảnh thành phẩm đã hoạt độ
 - Chụp bằng camera với đếm ngược; có thể chụp lại từng ảnh.
 - Chuyển sang mock mode để trải nghiệm khi camera không khả dụng hoặc không được cấp quyền.
 - Trang trí dải ảnh với màu khung, filter và chữ ký tùy chỉnh.
+- Tùy chỉnh chữ ký với kiểu chữ, màu, kích thước và sticker preset trước/sau/cả hai đầu chữ ký; có sticker cố định trên phần khung tiêu đề. Preview và PNG xuất dùng chung vị trí trang trí.
 - Xem trước, kết xuất ảnh PNG, tải xuống và chia sẻ qua tính năng chia sẻ của trình duyệt nếu được hỗ trợ.
 - Bắt đầu phiên mới và xóa dữ liệu phiên hiện tại.
 - Kiểm thử E2E cho luồng chọn 2-cut, chụp, chỉnh sửa, xuất/tải ảnh và bắt đầu lại.
@@ -37,12 +38,16 @@ Luồng cốt lõi từ trang chủ đến ảnh thành phẩm đã hoạt độ
 
 Mở rộng từ trải nghiệm cá nhân sang chia sẻ và các tính năng nâng cao:
 
-- Hoàn thiện trải nghiệm chia sẻ ảnh và tối ưu thành phẩm cho các nền tảng xã hội.
-- Cân nhắc tạo QR hoặc liên kết chia sẻ để mở ảnh trên thiết bị khác.
-- Bổ sung thư viện lưu/xem lại ảnh hoặc phiên chụp, với lựa chọn lưu trữ phù hợp.
-- Khám phá thêm template, sticker, tùy chỉnh nâng cao và các tính năng cộng đồng.
+**Đang triển khai**
 
-Phase 2 đã hoàn thiện phần triển khai chính; kiểm thử camera vật lý và tương thích đa thiết bị vẫn là xác nhận thủ công. Các mục Phase 3 là mục tiêu dự kiến, chưa phải tính năng đã phát hành.
+- [x] Chia sẻ PNG qua Web Share API khi trình duyệt hỗ trợ; có thông báo và nút tải ảnh dự phòng khi không hỗ trợ hoặc xảy ra lỗi.
+- [x] Tùy chỉnh chữ ký với 3 kiểu chữ, bảng màu preset đồng bộ frame và cỡ chữ; preview và PNG xuất dùng cùng lựa chọn.
+
+**Tiếp theo**
+
+- Upload ảnh và tạo liên kết/QR để mở ảnh trên thiết bị khác; chưa tích hợp Supabase, Firebase hay dịch vụ lưu trữ nào.
+- Khi triển khai chia sẻ xuyên thiết bị, cần chọn backend lưu ảnh và thiết kế cơ chế tự xóa ảnh sau 7 ngày.
+
 
 ## Bắt đầu
 
@@ -69,7 +74,7 @@ Chạy các bài kiểm thử luồng photobooth:
 npm run test:e2e
 ```
 
-Test tự khởi động ứng dụng và sử dụng camera giả lập của Chromium; không cần webcam thật. Các kịch bản bao gồm 2-cut/4-cut, giữ frame, timer, retake, filter không làm thay đổi ảnh gốc, xử lý từ chối quyền camera bằng mock mode, xuất PNG/tải ảnh, reset và kiểm tra tràn ngang ở viewport hẹp.
+Test tự khởi động ứng dụng và sử dụng camera giả lập của Chromium; không cần webcam thật. Các kịch bản bao gồm 2-cut/4-cut, giữ frame, timer, retake, filter không làm thay đổi ảnh gốc, tùy chỉnh chữ ký và vị trí sticker, xử lý từ chối quyền camera bằng mock mode, xuất PNG/tải ảnh, reset và kiểm tra tràn ngang ở viewport hẹp.
 
 ## Công nghệ
 
