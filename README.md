@@ -4,49 +4,22 @@ Photobooth 4-cut chạy trên trình duyệt, cho phép chụp ảnh bằng webc
 
 ## Trạng thái dự án
 
-**MVP: Hoàn thành các tính năng trong ứng dụng; còn thiếu upload và liên kết/QR để mở ảnh trên thiết bị khác.**
+**MVP trong ứng dụng: Hoàn thành.** Tính năng còn thiếu để hoàn tất phạm vi MVP mở rộng là upload và liên kết/QR để mở ảnh trên thiết bị khác.
 
-Luồng cốt lõi từ trang chủ đến ảnh thành phẩm đã hoạt động:
+Ứng dụng hiện hỗ trợ:
 
-- Chọn bố cục ảnh 2-cut hoặc 4-cut.
-- Chụp bằng camera với đếm ngược; có thể chụp lại từng ảnh.
-- Chuyển sang mock mode để trải nghiệm khi camera không khả dụng hoặc không được cấp quyền.
-- Trang trí dải ảnh với màu khung, filter và chữ ký tùy chỉnh.
-- Tùy chỉnh chữ ký với kiểu chữ, màu, kích thước và sticker preset trước/sau/cả hai đầu chữ ký; có sticker cố định trên phần khung tiêu đề. Preview và PNG xuất dùng chung vị trí trang trí.
-- Xem trước, kết xuất ảnh PNG, tải xuống và chia sẻ qua tính năng chia sẻ của trình duyệt nếu được hỗ trợ.
+- Chọn bố cục 2-cut/4-cut, frame và thời gian đếm ngược 3, 5 hoặc 10 giây.
+- Chụp bằng camera, chuyển camera trước/sau trên thiết bị hỗ trợ, chụp lại từng ảnh; có mock mode khi camera không khả dụng hoặc bị từ chối quyền.
+- Xem trạng thái camera, countdown, flash và tiến trình chụp.
+- Trang trí với frame, filter và chữ ký tùy chỉnh (kiểu chữ, màu, kích thước); thêm sticker cố định trên khung và sticker trước/sau/cả hai đầu chữ ký. Preview khớp PNG xuất.
+- Xuất và tải PNG; chia sẻ ảnh qua Web Share API nếu trình duyệt hỗ trợ, có tải ảnh dự phòng.
 - Bắt đầu phiên mới và xóa dữ liệu phiên hiện tại.
-- Kiểm thử E2E cho luồng chọn 2-cut, chụp, chỉnh sửa, xuất/tải ảnh và bắt đầu lại.
+- Đã kiểm thử E2E và kiểm thử thủ công trên mobile với camera thật, bao gồm chuyển đổi camera trước/sau.
 
-### Phase 2 — Photo Booth Experience
+## Tính năng còn thiếu
 
-**Trạng thái: Hoàn thành phần triển khai chính.** Camera vật lý và đổi camera trước/sau vẫn cần được xác nhận thủ công trên thiết bị mục tiêu.
-
-- [x] Hiển thị trạng thái camera, đếm ngược, flash và tiến trình chụp.
-- [x] Hỗ trợ camera trước/sau trên thiết bị di động khi trình duyệt và thiết bị cho phép.
-- [x] Cho phép chụp lại từng ảnh trong dải.
-- [x] Cho phép chọn bố cục 2-cut/4-cut và frame ở trang setup; lựa chọn được giữ khi sang capture.
-- [x] Cho phép chọn thời gian đếm ngược 3, 5 hoặc 10 giây; áp dụng cho chụp mới và retake.
-- [x] Cho phép chọn filter; preview dùng CSS trên ảnh gốc và filter chỉ được áp dụng khi xuất PNG.
-- [x] Có mock mode để trải nghiệm khi camera không khả dụng hoặc bị từ chối quyền.
-- [x] Bổ sung trạng thái truy cập được cho các lựa chọn và countdown; kiểm tra bố cục setup/capture ở viewport mobile bằng E2E.
-- [x] Mở rộng E2E cho 2-cut/4-cut, timer, retake, filter preview, camera bị từ chối quyền, mock mode, xuất/tải ảnh và reset.
-- [ ] Kiểm thử camera thật, đổi camera và trải nghiệm trình duyệt trên nhiều thiết bị mục tiêu.
-
-## Lộ trình phát triển
-
-### Phase 3 — Social / Advanced
-
-Mở rộng từ trải nghiệm cá nhân sang chia sẻ và các tính năng nâng cao:
-
-**Đang triển khai**
-
-- [x] Chia sẻ PNG qua Web Share API khi trình duyệt hỗ trợ; có thông báo và nút tải ảnh dự phòng khi không hỗ trợ hoặc xảy ra lỗi.
-- [x] Tùy chỉnh chữ ký với 3 kiểu chữ, bảng màu preset đồng bộ frame và cỡ chữ; preview và PNG xuất dùng cùng lựa chọn.
-
-**Tiếp theo**
-
-- Upload ảnh và tạo liên kết/QR để mở ảnh trên thiết bị khác; chưa tích hợp Supabase, Firebase hay dịch vụ lưu trữ nào.
-- Khi triển khai chia sẻ xuyên thiết bị, cần chọn backend lưu ảnh và thiết kế cơ chế tự xóa ảnh sau 7 ngày.
+- Upload ảnh và tạo liên kết/QR để mở ảnh trên thiết bị khác. Hiện chưa tích hợp Supabase, Firebase hay dịch vụ lưu trữ nào.
+- Khi triển khai chia sẻ xuyên thiết bị, cần chọn backend lưu ảnh và cơ chế tự động xóa ảnh sau 7 ngày.
 
 
 ## Bắt đầu
