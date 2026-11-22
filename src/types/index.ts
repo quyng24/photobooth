@@ -1,12 +1,8 @@
-export type CutMode = "2cut" | "4cut";
+export type CutMode = "2cut" | "3cut" | "4cut" | string;
 
 export type TimerOption = 3 | 5 | 10;
 
-export type FrameStyle =
-  | "y2k-pink"
-  | "cyber-cyan"
-  | "neon-yellow"
-  | "retro-black";
+export type FrameStyle = "we-bare-bears" | "taekwondo-panda" | "merry-christmas" | "tet-holiday" | (string & {});
 
 export type FilterStyle = "none" | "vintage" | "bw" | "pop";
 
@@ -23,6 +19,39 @@ export interface FrameStickerConfig {
   x: number;
   y: number;
   fontSize: number;
+}
+
+export interface FrameSlot {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  borderRadius?: number;
+}
+
+export interface FrameSignaturePosition {
+  x: number;
+  y: number;
+  align?: "center" | "left" | "right";
+}
+
+export interface FrameTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  cutCount: number;
+  width: number;
+  height: number;
+  slots: FrameSlot[];
+  overlayImage: string;
+  previewImage?: string;
+  background?: string;
+  backgroundHex?: string;
+  textColor?: string;
+  textHexColor?: string;
+  accentColor?: string;
+  signaturePosition?: FrameSignaturePosition;
 }
 
 export interface FrameConfig {
@@ -79,7 +108,9 @@ export interface PhotoStoreState {
 
 export interface RenderPhotoStripOptions {
   photos: string[];
-  frameBg: string;
+  frameId?: string;
+  frameTemplate?: FrameTemplate;
+  frameBg?: string;
   filter: string;
   customText: string;
   signatureColor: string;

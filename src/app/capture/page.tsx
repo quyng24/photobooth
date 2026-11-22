@@ -17,6 +17,7 @@ import { Y2kShell } from "@/components/y2k/Y2kShell";
 import { Y2kSteps } from "@/components/y2k/Y2kSteps";
 import { Y2kWindow } from "@/components/y2k/Y2kWindow";
 import { getFrameConfig, usePhotoStore } from "@/stores/photoStore";
+import { getFrame } from "@/frames/registry";
 import { imageUrlToDataUrl } from "@/utils/utils";
 
 const SAMPLE_PHOTOS = [
@@ -53,7 +54,6 @@ export default function CapturePage() {
   const [retakeIndex, setRetakeIndex] = useState<number | null>(null);
 
   const {
-    cutMode,
     photos,
     frameStyle,
     timer,
@@ -62,8 +62,9 @@ export default function CapturePage() {
     clearPhotos,
   } = usePhotoStore();
 
+  const frameTemplate = getFrame(frameStyle);
   const selectedFrame = getFrameConfig(frameStyle);
-  const photoCount = cutMode === "2cut" ? 2 : 4;
+  const photoCount = frameTemplate.slots.length;
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -619,7 +620,7 @@ export default function CapturePage() {
             {selectedFrame?.name ?? frameStyle}
           </div>
           <div className="hidden rounded-xl border-2 border-black bg-cyan-300 px-3 py-1.5 text-xs font-black uppercase shadow-[3px_3px_0px_0px_#000] sm:block">
-            {cutMode === "2cut" ? "2-CUT" : "4-CUT"}
+            {photoCount}-CUT
           </div>
         </div>
       </div>
@@ -751,7 +752,7 @@ export default function CapturePage() {
               <div className={`mb-2 border-b border-dashed border-black/40 pb-1 text-center font-mono text-[10px] font-black uppercase ${selectedFrame.textColor}`}>
                 {selectedFrame?.name ?? frameStyle}
               </div>
-              <div className={`grid ${photoCount === 2 ? "grid-cols-2" : "grid-cols-4"} gap-2`}>
+              <div className={`grid ${photoCount === 2 ? "grid-cols-2" : photoCount === 3 ? "grid-cols-3" : "grid-cols-4"} gap-2`}>
                 {slotItems.map((photo, index) => (
                   <div
                     key={photo ? `${index}-${photo.slice(0, 32)}` : `empty-${index}`}

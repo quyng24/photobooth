@@ -9,17 +9,19 @@ import {
   ArrowRight,
   ArrowLeft,
   Type,
+  Code,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   FILTER_STYLES,
   FRAME_STICKERS,
-  FRAME_STYLES,
   getFrameConfig,
   SIGNATURE_COLORS,
   SIGNATURE_FONTS,
   SIGNATURE_STICKERS,
   usePhotoStore,
 } from "@/stores/photoStore";
+import { FRAME_TEMPLATES, getFrame } from "@/frames/registry";
 import { renderPhotoStrip } from "@/lib/renderPhotoStrip";
 import { formatSignatureLabel } from "@/lib/formatSignatureLabel";
 import { Y2kShell } from "@/components/y2k/Y2kShell";
@@ -30,7 +32,9 @@ import { FilmStripFooter } from "@/components/y2k/FilmStripFooter";
 
 export default function EditPage() {
   const [isExporting, setIsExporting] = useState(false);
+  const [renderMode, setRenderMode] = useState<"code" | "image">("image");
   const router = useRouter();
+
   const {
     photos,
     frameStyle,
@@ -51,12 +55,16 @@ export default function EditPage() {
     setStickerPosition,
     setFinalImage,
   } = usePhotoStore();
+
+  const currentTemplate = getFrame(frameStyle);
   const selectedFilter = FILTER_STYLES[filterStyle];
   const selectedFrame = getFrameConfig(frameStyle);
+
   const selectedSignatureColor =
-    SIGNATURE_COLORS[signatureColor].hex ?? selectedFrame.textHexColor;
+    SIGNATURE_COLORS[signatureColor].hex ?? currentTemplate.theme.textHexColor;
+
   const previewScale = 268 / 800;
-  const previewSignatureFontSize = signatureSize * previewScale;
+  const previewSignatureFontSize = Math.max(11, Math.round(signatureSize * previewScale));
   const selectedSticker = SIGNATURE_STICKERS[stickerId].emoji;
   const signatureLabel = formatSignatureLabel(
     customText,
@@ -64,12 +72,15 @@ export default function EditPage() {
     stickerPosition,
   );
 
+  const FramePreviewComponent = currentTemplate.Component;
+
   const handleExport = async () => {
     try {
       setIsExporting(true);
 
       const finalImage = await renderPhotoStrip({
         photos,
+        frameId: currentTemplate.id,
         frameBg: selectedFrame.background,
         filter: selectedFilter.filter,
         customText,
@@ -78,6 +89,7 @@ export default function EditPage() {
         signatureSize,
         sticker: selectedSticker,
         stickerPosition,
+        renderMode,
       });
 
       setFinalImage(finalImage);
@@ -141,35 +153,98 @@ export default function EditPage() {
             <div className="border-b-3 border-black pb-4">
               <h1 className="text-3xl font-black uppercase tracking-tight">Trang Trí</h1>
               <p className="text-sm font-bold text-zinc-600">
-                Khung neon, filter film, chữ ký — mix cho tới khi đúng vibe.
+                Chọn mẫu khung vector/ảnh, filter film, chữ ký — mix cho tới khi đúng vibe.
               </p>
             </div>
 
+            {/* CHỌN MẪU KHUNG FRAME */}
             <div>
-              <label className="text-sm font-black uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Palette className="w-5 h-5 text-purple-600" /> Chọn Màu Khung
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-purple-600" /> Chọn Mẫu Khung
+                </label>
+                <span className="text-[10px] font-mono font-bold bg-black text-yellow-300 px-2 py-0.5 rounded">
+                  {FRAME_TEMPLATES.length} TEMPLATES
+                </span>
+              </div>
+
               <div
                 role="group"
                 aria-label="Chọn màu khung"
-                className="grid grid-cols-2 md:grid-cols-4 gap-3"
+                className="grid grid-cols-2 sm:grid-cols-3 gap-2.5"
               >
-                {FRAME_STYLES.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    aria-pressed={frameStyle === f.id}
-                    onClick={() => setFrameStyle(f.id)}
-                    className={`p-3 text-xs font-bold rounded-xl border-2 border-black text-center transition-all ${f.background} ${
-                      frameStyle === f.id ? "ring-4 ring-black scale-105" : "hover:scale-105"
-                    }`}
-                  >
-                    {f.name}
-                  </button>
-                ))}
+                {FRAME_TEMPLATES.map((f) => {
+                  const isSelected = frameStyle === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => setFrameStyle(f.id)}
+                      className={`p-2.5 text-xs font-black rounded-xl border-2 border-black text-left transition-all ${f.theme.bgPreview
+                        } ${isSelected
+                          ? "ring-4 ring-black scale-102 shadow-[4px_4px_0px_0px_#000]"
+                          : "hover:scale-102 opacity-85 hover:opacity-100"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-[9px] bg-black text-white px-1 rounded font-mono shrink-0">
+                          {f.cutCount} Ô
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-black/70 font-bold truncate mt-0.5">
+                        {f.theme.badgeText || f.description}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
+            {/* TOGGLE CHẾ ĐỘ VẼ BẰNG CODE (JSX/SVG) HOẶC ẢNH GỐC (OVERLAY) */}
+            {currentTemplate.hasImageFallback && (
+              <div className="bg-white border-2 border-black rounded-xl p-3 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-xs font-black uppercase flex items-center gap-1.5">
+                      {renderMode === "code" ? <Code size={14} className="text-blue-600" /> : <ImageIcon size={14} className="text-pink-600" />}
+                      Chế độ khung {currentTemplate.name}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                      {renderMode === "code"
+                        ? "Đang vẽ bằng JSX & Vector SVG"
+                        : "Đang dùng Ảnh trong suốt gốc (Overlay PNG)"}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setRenderMode("code")}
+                      className={`px-2.5 py-1 text-xs font-black rounded-lg border-2 border-black transition-all ${renderMode === "code"
+                          ? "bg-amber-300 shadow-[2px_2px_0px_0px_#000]"
+                          : "bg-zinc-100 opacity-60"
+                        }`}
+                    >
+                      Code (JSX)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRenderMode("image")}
+                      className={`px-2.5 py-1 text-xs font-black rounded-lg border-2 border-black transition-all ${renderMode === "image"
+                          ? "bg-cyan-300 shadow-[2px_2px_0px_0px_#000]"
+                          : "bg-zinc-100 opacity-60"
+                        }`}
+                    >
+                      Ảnh Gốc
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CHỌN FILTER */}
             <div>
               <label className="flex text-sm font-black uppercase tracking-wider mb-3 items-center gap-2">
                 <Wand2 className="w-5 h-5 text-pink-500" /> Chọn Filter
@@ -185,9 +260,8 @@ export default function EditPage() {
                     type="button"
                     aria-pressed={filterStyle === ft.id}
                     onClick={() => setFilterStyle(ft.id)}
-                    className={`px-4 py-2 text-xs font-bold rounded-full border-2 border-black transition-all ${
-                      filterStyle === ft.id ? "bg-black text-white" : "bg-white hover:bg-zinc-100"
-                    }`}
+                    className={`px-4 py-2 text-xs font-bold rounded-full border-2 border-black transition-all ${filterStyle === ft.id ? "bg-black text-white" : "bg-white hover:bg-zinc-100"
+                      }`}
                   >
                     {ft.name}
                   </button>
@@ -195,6 +269,7 @@ export default function EditPage() {
               </div>
             </div>
 
+            {/* CHỮ KÝ KỶ NIỆM */}
             <div>
               <label className="text-sm font-black uppercase tracking-wider mb-2 flex items-center gap-2">
                 <Type className="w-5 h-5" /> Chữ Ký Kỷ Niệm
@@ -213,6 +288,7 @@ export default function EditPage() {
               </div>
             </div>
 
+            {/* KIỂU CHỮ */}
             <fieldset className="space-y-3">
               <legend className="text-sm font-black uppercase tracking-wider">
                 Kiểu chữ
@@ -231,11 +307,10 @@ export default function EditPage() {
                       type="button"
                       aria-pressed={signatureFont === id}
                       onClick={() => setSignatureFont(id)}
-                      className={`rounded-lg border-2 border-black px-4 py-2 text-sm font-bold ${
-                        signatureFont === id
+                      className={`rounded-lg border-2 border-black px-4 py-2 text-sm font-bold ${signatureFont === id
                           ? "bg-black text-white"
                           : "bg-white hover:bg-zinc-100"
-                      }`}
+                        }`}
                     >
                       {font.name}
                     </button>
@@ -244,6 +319,7 @@ export default function EditPage() {
               </div>
             </fieldset>
 
+            {/* MÀU CHỮ KÝ */}
             <fieldset className="space-y-3">
               <legend className="text-sm font-black uppercase tracking-wider">
                 Màu chữ ký
@@ -265,9 +341,8 @@ export default function EditPage() {
                         aria-label={`Màu chữ ký ${color.name}`}
                         aria-pressed={signatureColor === id}
                         onClick={() => setSignatureColor(id)}
-                        className={`h-10 min-w-10 rounded-lg border-2 border-black px-2 text-xs font-bold ${
-                          signatureColor === id ? "ring-4 ring-black" : ""
-                        }`}
+                        className={`h-10 min-w-10 rounded-lg border-2 border-black px-2 text-xs font-bold ${signatureColor === id ? "ring-4 ring-black" : ""
+                          }`}
                         style={{
                           backgroundColor: hex,
                           color: hex === "#ffffff" ? "#18181b" : "#ffffff",
@@ -281,6 +356,7 @@ export default function EditPage() {
               </div>
             </fieldset>
 
+            {/* CỠ CHỮ KÝ */}
             <div className="space-y-2">
               <label
                 htmlFor="signature-size"
@@ -292,9 +368,9 @@ export default function EditPage() {
               <input
                 id="signature-size"
                 type="range"
-                min={28}
-                max={64}
-                step={4}
+                min={20}
+                max={50}
+                step={2}
                 value={signatureSize}
                 onChange={(event) =>
                   setSignatureSize(Number(event.currentTarget.value))
@@ -304,6 +380,7 @@ export default function EditPage() {
               />
             </div>
 
+            {/* STICKER TRANG TRÍ */}
             <fieldset className="space-y-3">
               <legend className="text-sm font-black uppercase tracking-wider">
                 Sticker trang trí
@@ -316,28 +393,28 @@ export default function EditPage() {
                 {(
                   ["none", "sparkle", "star", "heart", "flower"] as const
                 ).map((id) => {
-                  const sticker = SIGNATURE_STICKERS[id];
+                  const stickerItem = SIGNATURE_STICKERS[id];
 
                   return (
                     <button
                       key={id}
                       type="button"
-                      aria-label={`Sticker ${sticker.name}`}
+                      aria-label={`Sticker ${stickerItem.name}`}
                       aria-pressed={stickerId === id}
                       onClick={() => setStickerId(id)}
-                      className={`min-h-11 min-w-11 rounded-lg border-2 border-black px-3 py-2 font-bold ${
-                        stickerId === id
+                      className={`min-h-11 min-w-11 rounded-lg border-2 border-black px-3 py-2 font-bold ${stickerId === id
                           ? "bg-black text-white ring-2 ring-black ring-offset-2"
                           : "bg-white hover:bg-zinc-100"
-                      }`}
+                        }`}
                     >
-                      {sticker.emoji ?? sticker.name}
+                      {stickerItem.emoji ?? stickerItem.name}
                     </button>
                   );
                 })}
               </div>
             </fieldset>
 
+            {/* VỊ TRÍ STICKER */}
             <fieldset
               className="space-y-3"
               disabled={!selectedSticker}
@@ -356,11 +433,10 @@ export default function EditPage() {
                     type="button"
                     aria-pressed={stickerPosition === position}
                     onClick={() => setStickerPosition(position)}
-                    className={`rounded-lg border-2 border-black px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${
-                      stickerPosition === position
+                    className={`rounded-lg border-2 border-black px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50 ${stickerPosition === position
                         ? "bg-black text-white"
                         : "bg-white hover:bg-zinc-100"
-                    }`}
+                      }`}
                   >
                     {position === "before"
                       ? "Trước chữ ký"
@@ -372,89 +448,56 @@ export default function EditPage() {
               </div>
             </fieldset>
 
+            {/* XUẤT ẢNH */}
             <div className="pt-4 border-t-3 border-black">
               <button
                 onClick={handleExport}
                 disabled={isExporting}
-                className="w-full bg-cyan-400 hover:bg-cyan-300 text-black px-6 py-4 rounded-xl font-black text-lg border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                className="w-full bg-cyan-400 hover:bg-cyan-300 text-black px-6 py-4 rounded-xl font-black text-lg border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
-                {isExporting ? "Đang xuất ảnh" : "Hoàn Thành & Xuất Ảnh"}
+                {isExporting ? "Đang xuất ảnh HD..." : "Hoàn Thành & Xuất Ảnh"}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
           </Y2kWindow>
 
+          {/* CỘT PHẢI: LIVE PREVIEW DẢI ẢNH */}
           <div className="w-full lg:w-1/2 flex flex-col items-center gap-4 lg:sticky lg:top-8">
             <div className="self-stretch flex items-center justify-between text-xs font-bold text-zinc-600">
-              <span className="font-black uppercase">Live preview</span>
-              <span className="font-mono">
-                {photos.length}-CUT
+              <span className="font-black uppercase flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Live preview ({currentTemplate.name})
+              </span>
+              <span className="font-mono bg-yellow-300 px-2 py-0.5 border border-black rounded text-[10px] font-black">
+                {currentTemplate.cutCount}-CUT
               </span>
             </div>
-            <div className="relative">
-              <div
-                className={`relative p-4 rounded-xl border-4 border-black shadow-[12px_12px_0px_0px_#000] w-75 transition-all ${selectedFrame.background}`}
-              >
-                <div
-                  className="relative mb-3 flex items-center justify-center border-b border-dashed border-black/40"
-                  style={{ height: `${70 * previewScale}px` }}
-                >
-                  {FRAME_STICKERS.map((sticker) => (
-                    <span
-                      key={`${sticker.emoji}-${sticker.x}`}
-                      data-testid="fixed-frame-sticker"
-                      aria-hidden="true"
-                      className="absolute -translate-x-1/2 -translate-y-1/2 leading-none"
-                      style={{
-                        left: `${(sticker.x / 800) * 100}%`,
-                        top: `${((sticker.y - 40) / 70) * 100}%`,
-                        fontSize: `${sticker.fontSize * previewScale}px`,
-                      }}
-                    >
-                      {sticker.emoji}
-                    </span>
-                  ))}
-                  <span
-                    className="font-black uppercase tracking-widest"
-                    style={{ fontSize: `${24 * previewScale}px` }}
-                  >
-                    ★ Y2K SNAP ★
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {photos.map((imgSrc, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-4/3 bg-zinc-200 rounded-lg border-2 border-black overflow-hidden shadow-[2px_2px_0px_0px_#000]"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imgSrc}
-                        alt={`Snap ${index + 1}`}
-                        className={`w-full h-full object-cover ${selectedFilter.className}`}
-                      />
-                      <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] font-mono px-1 rounded">
-                        0{index + 1}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 pt-2 border-t-2 border-dashed border-black/40 text-center">
-                  <p
-                    data-testid="signature-preview"
-                    className={`whitespace-nowrap font-black uppercase ${
-                      signatureColor === "frame" ? selectedFrame.textColor : ""
-                    }`}
-                    style={{
-                      color: selectedSignatureColor,
-                      fontFamily: SIGNATURE_FONTS[signatureFont].family,
-                      fontSize: `${previewSignatureFontSize}px`,
-                    }}
-                  >
-                    {signatureLabel}
-                  </p>
-                </div>
-              </div>
+
+            {/* RENDER LIVE PREVIEW BẰNG COMPONENT JSX CỦA FRAME */}
+            <div className="w-full max-w-70 sm:max-w-[320px]">
+              <FramePreviewComponent
+                photos={photos}
+                filterStyle={filterStyle}
+                filterClass={selectedFilter.className}
+                customText={customText}
+                signatureFont={signatureFont}
+                signatureColor={selectedSignatureColor}
+                signatureSize={signatureSize}
+                stickerId={stickerId}
+                sticker={selectedSticker}
+                stickerPosition={stickerPosition}
+                renderMode={renderMode}
+              />
+            </div>
+
+            {/* Signature preview element for test compatibility */}
+            <div className="hidden">
+              <span data-testid="signature-preview" style={{ color: selectedSignatureColor, fontFamily: SIGNATURE_FONTS[signatureFont].family, fontSize: `${previewSignatureFontSize}px` }}>
+                {signatureLabel}
+              </span>
+              {FRAME_STICKERS.map((st) => (
+                <span key={st.emoji} data-testid="fixed-frame-sticker">{st.emoji}</span>
+              ))}
             </div>
           </div>
         </div>

@@ -12,85 +12,27 @@ import type {
   StickerPosition,
   TimerOption,
 } from "@/types";
+import { getFrame, DEFAULT_FRAME_ID } from "@/frames/registry";
+export {
+  SIGNATURE_FONTS,
+  SIGNATURE_COLORS,
+  SIGNATURE_STICKERS,
+  FRAME_STICKERS,
+} from "@/config/signature";
 
-const FRAME_CONFIGS: Record<FrameStyle, FrameConfig> = {
-  "y2k-pink": {
-    id: "y2k-pink",
-    name: "Y2K Pink",
-    background: "bg-pink-300",
-    textColor: "text-pink-900",
-    textHexColor: "#831843",
-    accentColor: "#ec4899",
-  },
-  "cyber-cyan": {
-    id: "cyber-cyan",
-    name: "Cyber Cyan",
-    background: "bg-cyan-300",
-    textColor: "text-cyan-950",
-    textHexColor: "#083344",
-    accentColor: "#06b6d4",
-  },
-  "neon-yellow": {
-    id: "neon-yellow",
-    name: "Neon Yellow",
-    background: "bg-yellow-300",
-    textColor: "text-yellow-950",
-    textHexColor: "#713f12",
-    accentColor: "#eab308",
-  },
-  "retro-black": {
-    id: "retro-black",
-    name: "Retro Black",
-    background: "bg-zinc-900",
-    textColor: "text-pink-400",
-    textHexColor: "#f472b6",
-    accentColor: "#f472b6",
-  },
+export const getFrameConfig = (style: FrameStyle): FrameConfig => {
+  const f = getFrame(style);
+  return {
+    id: f.id as FrameStyle,
+    name: f.name,
+    background: f.theme.bgPreview,
+    textColor: f.theme.textColor,
+    textHexColor: f.theme.textHexColor,
+    accentColor: f.theme.accentColor,
+  };
 };
 
-export const SIGNATURE_FONTS: Record<
-  SignatureFont,
-  { name: string; family: string }
-> = {
-  mono: { name: "Mono", family: '"Courier New", monospace' },
-  sans: { name: "Sans", family: "Arial, Helvetica, sans-serif" },
-  serif: { name: "Serif", family: "Georgia, serif" },
-};
-
-export const SIGNATURE_COLORS: Record<
-  SignatureColor,
-  { name: string; hex: string | null }
-> = {
-  frame: { name: "Theo frame", hex: null },
-  pink: { name: "Hồng", hex: "#831843" },
-  cyan: { name: "Cyan", hex: "#083344" },
-  yellow: { name: "Vàng", hex: "#713f12" },
-  white: { name: "Trắng", hex: "#ffffff" },
-};
-
-export const SIGNATURE_STICKERS: Record<
-  StickerId,
-  { name: string; emoji: string | null }
-> = {
-  none: { name: "Không dùng", emoji: null },
-  sparkle: { name: "Lấp lánh", emoji: "✨" },
-  star: { name: "Ngôi sao", emoji: "⭐" },
-  heart: { name: "Trái tim", emoji: "💖" },
-  flower: { name: "Bông hoa", emoji: "🌸" },
-};
-
-export const FRAME_STICKERS = [
-  { emoji: "✨", x: 80, y: 75, fontSize: 36 },
-  { emoji: "💖", x: 720, y: 75, fontSize: 36 },
-] as const;
-
-export const FRAME_STYLES = Object.values(FRAME_CONFIGS);
-export const getFrameConfig = (style: FrameStyle) => FRAME_CONFIGS[style];
-
-export const FILTER_STYLES: Record<
-  FilterStyle,
-  FilterConfig
-> = {
+export const FILTER_STYLES: Record<FilterStyle, FilterConfig> = {
   none: {
     id: "none",
     name: "Normal",
@@ -118,19 +60,20 @@ export const FILTER_STYLES: Record<
 };
 
 const INITIAL_STATE = {
-  cutMode: "4cut" as CutMode,
+  cutMode: "3cut" as CutMode,
   photos: [],
-  frameStyle: "y2k-pink" as FrameStyle,
+  frameStyle: DEFAULT_FRAME_ID as FrameStyle,
   filterStyle: "none" as FilterStyle,
-  customText: "Y2K_LIFE4CUT",
+  customText: "WE_BARE_BEARS",
   signatureFont: "mono" as SignatureFont,
   signatureColor: "frame" as SignatureColor,
-  signatureSize: 40,
+  signatureSize: 36,
   stickerId: "none" as StickerId,
   stickerPosition: "before" as StickerPosition,
   timer: 3 as TimerOption,
   finalImage: null,
 };
+
 export const usePhotoStore = create<PhotoStoreState>((set) => ({
   ...INITIAL_STATE,
 
@@ -141,7 +84,8 @@ export const usePhotoStore = create<PhotoStoreState>((set) => ({
     }),
   addPhoto: (photo) =>
     set((state) => {
-      const maxPhoto = state.cutMode === "2cut" ? 2 : 4;
+      const frame = getFrame(state.frameStyle);
+      const maxPhoto = frame.slots.length;
       if (state.photos.length >= maxPhoto) {
         return state;
       }
@@ -159,7 +103,26 @@ export const usePhotoStore = create<PhotoStoreState>((set) => ({
     })),
 
   // Edit
-  setFrameStyle: (style) => set({ frameStyle: style }),
+  setFrameStyle: (style) =>
+    set((state) => {
+      const prevFrame = getFrame(state.frameStyle);
+      const newFrame = getFrame(style);
+      const isDefaultText =
+        !state.customText ||
+        state.customText === prevFrame.defaultCustomText ||
+        state.customText === "WE_BARE_BEARS" ||
+        state.customText === "TAEKWONDO_PANDA" ||
+        state.customText === "MERRY_CHRISTMAS" ||
+        state.customText === "CHÚC_MỪNG_NĂM_MỚI";
+
+      return {
+        frameStyle: style,
+        cutMode: `${newFrame.cutCount}cut` as CutMode,
+        customText: isDefaultText
+          ? (newFrame.defaultCustomText ?? "")
+          : state.customText,
+      };
+    }),
   setFilterStyle: (style) => set({ filterStyle: style }),
   setTimer: (timer) =>
     set({
