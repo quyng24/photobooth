@@ -52,8 +52,6 @@ export default function CapturePage() {
   const [flash, setFlash] = useState(false);
   const [isMockMode, setIsMockMode] = useState(false);
   const [retakeIndex, setRetakeIndex] = useState<number | null>(null);
-  // Tỉ lệ thật của video camera: khung preview theo đúng tỉ lệ này để vùng gợi ý cắt chính xác
-  const [videoAspect, setVideoAspect] = useState(4 / 3);
 
   const {
     photos,
@@ -68,15 +66,13 @@ export default function CapturePage() {
   const selectedFrame = getFrameConfig(frameStyle);
   const photoCount = frameTemplate.slots.length;
 
-  // Ô ảnh sắp chụp: ảnh sẽ được cắt giữa theo đúng tỉ lệ của ô này khi ghép vào khung
-  const activeSlot =
-    frameTemplate.slots[Math.min(retakeIndex ?? photos.length, photoCount - 1)];
+  // Ô ảnh sắp chụp: xác định theo tiến trình chụp hoặc ô retake
+  const currentSlotIndex = Math.min(
+    retakeIndex ?? photos.length,
+    photoCount - 1
+  );
+  const activeSlot = frameTemplate.slots[currentSlotIndex];
   const slotRatio = activeSlot.width / activeSlot.height;
-  const GUIDE_SCALE = 0.96;
-  const guideWidthPct =
-    (slotRatio > videoAspect ? 100 : (slotRatio / videoAspect) * 100) * GUIDE_SCALE;
-  const guideHeightPct =
-    (slotRatio > videoAspect ? (videoAspect / slotRatio) * 100 : 100) * GUIDE_SCALE;
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -232,10 +228,10 @@ export default function CapturePage() {
     setCameraError("");
   };
 
-  const generateMockCanvasPhoto = (): string => {
+  const generateMockCanvasPhoto = (targetRatio = 4 / 3): string => {
     const canvas = document.createElement("canvas");
     canvas.width = 960;
-    canvas.height = 720;
+    canvas.height = Math.round(960 / targetRatio);
     const ctx = canvas.getContext("2d");
     if (!ctx) return "";
 
@@ -254,27 +250,34 @@ export default function CapturePage() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 12;
-    ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+    ctx.lineWidth = 10;
+    ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
 
     ctx.fillStyle = "#000000";
-    ctx.font = "bold 64px sans-serif";
+    ctx.font = "bold 56px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("📸 Y2K SNAP ★", canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillText("📸 Y2K SNAP ★", canvas.width / 2, canvas.height / 2 - 35);
 
-    ctx.font = "bold 36px monospace";
+    ctx.font = "bold 30px monospace";
     ctx.fillText(
       `MOCK PHOTO #${Math.floor(Math.random() * 900 + 100)}`,
       canvas.width / 2,
-      canvas.height / 2 + 50
+      canvas.height / 2 + 40
     );
 
-    return canvas.toDataURL("image/jpeg", 0.92);
+    return canvas.toDataURL("image/jpeg", 0.95);
   };
 
   const captureCanvasPhoto = useCallback(
     async (photoIndex?: number): Promise<string | null> => {
+      const targetSlotIndex =
+        typeof photoIndex === "number"
+          ? Math.min(photoIndex, photoCount - 1)
+          : Math.min(retakeIndex ?? photos.length, photoCount - 1);
+      const targetSlot = frameTemplate.slots[targetSlotIndex];
+      const targetRatio = targetSlot.width / targetSlot.height;
+
       if (isMockMode) {
         const sampleIndex =
           typeof photoIndex === "number"
@@ -283,68 +286,112 @@ export default function CapturePage() {
         const selectedPhoto = SAMPLE_PHOTOS[sampleIndex];
 
         try {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+            img.src = selectedPhoto;
+          });
+
+          const canvas = document.createElement("canvas");
+          const iRatio = img.width / img.height;
+          let sx = 0,
+            sy = 0,
+            sw = img.width,
+            sh = img.height;
+          if (iRatio > targetRatio) {
+            sw = Math.round(img.height * targetRatio);
+            sx = Math.round((img.width - sw) / 2);
+          } else {
+            sh = Math.round(img.width / targetRatio);
+            sy = Math.round((img.height - sh) / 2);
+          }
+
+          canvas.width = targetSlot.width * 2;
+          canvas.height = targetSlot.height * 2;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL("image/jpeg", 0.95);
+          }
           return await imageUrlToDataUrl(selectedPhoto);
         } catch (error) {
           console.warn(
             "Mock photo fetch failed, generating fallback canvas photo:",
             error
           );
-          return generateMockCanvasPhoto();
+          return generateMockCanvasPhoto(targetRatio);
         }
       }
 
-    const video = videoRef.current;
+      const video = videoRef.current;
 
-    if (!video) {
-      throw new Error("Camera chưa sẵn sàng.");
-    }
+      if (!video) {
+        throw new Error("Camera chưa sẵn sàng.");
+      }
 
-    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-      throw new Error("Video camera chưa sẵn sàng.");
-    }
+      if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        throw new Error("Video camera chưa sẵn sàng.");
+      }
 
-    const canvas = document.createElement("canvas");
-    const vWidth = video.videoWidth || 640;
-    const vHeight = video.videoHeight || 480;
+      const vWidth = video.videoWidth || 1280;
+      const vHeight = video.videoHeight || 720;
+      const vRatio = vWidth / vHeight;
 
-    // Lưu TOÀN BỘ khung hình camera (không cắt trước). Việc cắt theo tỉ lệ ô ảnh của từng khung
-    // được làm lúc ghép khung (cắt giữa), khớp với vùng gợi ý trên preview và không mất chi tiết
-    // khi đổi sang khung có ô khác tỉ lệ (ngang / vuông).
-    const sx = 0;
-    const sy = 0;
-    const sWidth = vWidth;
-    const sHeight = vHeight;
-    const outWidth = Math.min(vWidth, 1920);
-    canvas.width = outWidth;
-    canvas.height = Math.round((outWidth * vHeight) / vWidth);
+      // Cắt video chính xác theo tỷ lệ targetRatio của ô ảnh (khớp 1:1 với khung ngắm)
+      let sx = 0,
+        sy = 0,
+        sWidth = vWidth,
+        sHeight = vHeight;
+      if (vRatio > targetRatio) {
+        // Video rộng hơn khung ngắm -> Cắt 2 bên lề trái/phải, lấy chính giữa
+        sWidth = Math.round(vHeight * targetRatio);
+        sx = Math.round((vWidth - sWidth) / 2);
+      } else {
+        // Video cao hơn khung ngắm -> Cắt lề trên/dưới, lấy chính giữa
+        sHeight = Math.round(vWidth / targetRatio);
+        sy = Math.round((vHeight - sHeight) / 2);
+      }
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("Không thể tạo Canvas context.");
-    }
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+      const canvas = document.createElement("canvas");
+      // Kích thước canvas xuất ra: tối thiểu gấp đôi kích thước slot trong frame để nét căng
+      const outWidth = Math.min(Math.max(sWidth, targetSlot.width * 2), 1600);
+      const outHeight = Math.round(outWidth / targetRatio);
+      canvas.width = outWidth;
+      canvas.height = outHeight;
 
-    // Mirror image horizontally to match preview
-    if(facingMode === "user") {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-    }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("Không thể tạo Canvas context.");
+      }
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
-    ctx.drawImage(
-      video,
-      sx,
-      sy,
-      sWidth,
-      sHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+      // Mirror image horizontally to match preview if front camera
+      if (facingMode === "user") {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
 
-    return canvas.toDataURL("image/jpeg", 0.95);
-  }, [isMockMode, facingMode]);
+      ctx.drawImage(
+        video,
+        sx,
+        sy,
+        sWidth,
+        sHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      return canvas.toDataURL("image/jpeg", 0.95);
+    },
+    [isMockMode, facingMode, frameTemplate.slots, photoCount, retakeIndex, photos.length]
+  );
 
   const sleep = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -656,12 +703,18 @@ export default function CapturePage() {
             </div>
           </div>
 
-          <div className="relative mb-3 flex w-full max-w-xl mx-auto items-center justify-center overflow-hidden rounded-2xl border-4 border-black bg-black shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)]"
-            style={{ aspectRatio: videoAspect }}
+          {/* KHUNG NGẮM CAMERA CHUẨN TỶ LỆ Ô ẢNH CỦA FRAME (SLOT RATIO) */}
+          <div
+            className="relative mb-3 flex w-full max-w-lg mx-auto items-center justify-center overflow-hidden rounded-2xl border-4 border-black bg-black shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)] select-none"
+            style={{
+              aspectRatio: slotRatio,
+              maxHeight: "min(52vh, 480px)",
+            }}
           >
-            <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/20 z-20">
+            {/* Trạng thái REC / READY */}
+            <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/20 z-20">
               <div
-                className={`w-3 h-3 rounded-full ${
+                className={`w-2.5 h-2.5 rounded-full ${
                   isCapturing
                     ? "bg-red-500 animate-pulse"
                     : cameraStatus === "ready"
@@ -684,6 +737,7 @@ export default function CapturePage() {
               </span>
             </div>
 
+            {/* Nút đổi camera trước/sau trên mobile */}
             {isMobile && !isMockMode && (
               <button
                 type="button"
@@ -699,21 +753,44 @@ export default function CapturePage() {
                     ? "Chuyển sang camera sau"
                     : "Chuyển sang camera trước"
                 }
-                className="absolute top-3 right-3 z-30 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/70 bg-black/60 text-white backdrop-blur-sm transition hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute top-3 right-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/70 bg-black/60 text-white backdrop-blur-sm transition hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
               >
-                <RefreshCw size={18} />
+                <RefreshCw size={16} />
               </button>
             )}
 
-            {/* Vùng ảnh sẽ lọt vào ô của khung: phần tối bên ngoài sẽ bị cắt bỏ */}
-            <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-white/40 pointer-events-none z-10 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
-              style={{ width: `${guideWidthPct}%`, height: `${guideHeightPct}%` }}
-            >
-              <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white" />
-              <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white" />
-              <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-white" />
-              <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-white" />
+            {/* 4 Góc ngắm Y2K Viewfinder Reticle */}
+            <div className="absolute top-2.5 left-2.5 w-5 h-5 border-t-3 border-l-3 border-yellow-300 pointer-events-none z-10 drop-shadow-[1px_1px_0px_#000]" />
+            <div className="absolute top-2.5 right-2.5 w-5 h-5 border-t-3 border-r-3 border-yellow-300 pointer-events-none z-10 drop-shadow-[1px_1px_0px_#000]" />
+            <div className="absolute bottom-2.5 left-2.5 w-5 h-5 border-b-3 border-l-3 border-yellow-300 pointer-events-none z-10 drop-shadow-[1px_1px_0px_#000]" />
+            <div className="absolute bottom-2.5 right-2.5 w-5 h-5 border-b-3 border-r-3 border-yellow-300 pointer-events-none z-10 drop-shadow-[1px_1px_0px_#000]" />
+
+            {/* Lưới căn góc 1/3 (Rule of Thirds) mờ nhẹ */}
+            <div className="absolute inset-0 pointer-events-none z-10 grid grid-cols-3 grid-rows-3 opacity-20">
+              <div className="border-r border-b border-white/60" />
+              <div className="border-r border-b border-white/60" />
+              <div className="border-b border-white/60" />
+              <div className="border-r border-b border-white/60" />
+              <div className="border-r border-b border-white/60 flex items-center justify-center">
+                <span className="text-white font-mono text-sm leading-none">+</span>
+              </div>
+              <div className="border-b border-white/60" />
+              <div className="border-r border-white/60" />
+              <div className="border-r border-white/60" />
+              <div />
+            </div>
+
+            {/* Badge thông tin ô và tỉ lệ khung hình */}
+            <div className="absolute bottom-2.5 left-3 flex items-center gap-1.5 pointer-events-none z-20">
+              <span className="bg-black/75 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border border-white/30 backdrop-blur-xs">
+                Ô {currentSlotIndex + 1}/{photoCount} • {frameTemplate.name}
+              </span>
+            </div>
+
+            <div className="absolute bottom-2.5 right-3 flex items-center gap-1.5 pointer-events-none z-20">
+              <span className="bg-black/75 text-yellow-300 text-[10px] font-mono font-black px-2 py-0.5 rounded-md border border-white/30 backdrop-blur-xs">
+                {activeSlot.width} × {activeSlot.height} px
+              </span>
             </div>
 
             <video
@@ -721,15 +798,7 @@ export default function CapturePage() {
               autoPlay
               playsInline
               muted
-              onLoadedMetadata={(e) => {
-                const v = e.currentTarget;
-                if (v.videoWidth && v.videoHeight) setVideoAspect(v.videoWidth / v.videoHeight);
-              }}
-              onResize={(e) => {
-                const v = e.currentTarget;
-                if (v.videoWidth && v.videoHeight) setVideoAspect(v.videoWidth / v.videoHeight);
-              }}
-              className={`w-full h-full object-cover z-0 ${
+              className={`w-full h-full object-cover object-center z-0 ${
                 facingMode === "user" ? "scale-x-[-1]" : ""
               } ${
                 cameraStatus === "ready" && !isMockMode ? "block" : "hidden"
@@ -745,13 +814,13 @@ export default function CapturePage() {
             )}
 
             {countdown !== null && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] z-30">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/25 backdrop-blur-[2px] z-30">
                 <span
                   role="status"
                   aria-live="polite"
                   aria-atomic="true"
-                  className="text-[140px] font-black text-yellow-400 animate-bounce drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] select-none"
-                  style={{ WebkitTextStroke: "4px black" }}
+                  className="text-8xl sm:text-9xl font-black text-yellow-400 animate-bounce drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] select-none"
+                  style={{ WebkitTextStroke: "3px black" }}
                 >
                   {countdown}
                 </span>
@@ -774,50 +843,53 @@ export default function CapturePage() {
                 {selectedFrame?.name ?? frameStyle}
               </div>
               <div className={`grid ${photoCount === 2 ? "grid-cols-2" : photoCount === 3 ? "grid-cols-3" : "grid-cols-4"} gap-2`}>
-                {slotItems.map((photo, index) => (
-                  <div
-                    key={photo ? `${index}-${photo.slice(0, 32)}` : `empty-${index}`}
-                    className="relative group rounded-xl border-2 border-black overflow-hidden bg-white shadow-[3px_3px_0px_0px_#000] min-h-16"
-                  >
-                    {photo ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full object-cover block"
-                          style={{ aspectRatio: slotRatio }}
-                        />
-                        <div className="absolute top-1 left-1 bg-black text-white text-[10px] font-black px-1.5 py-0.5 rounded">
-                          0{index + 1}
-                        </div>
-                        <button
-                          onClick={() => startRetake(index)}
-                          disabled={isCapturing}
-                          className={`absolute inset-x-1 bottom-1 py-1 bg-pink-400 hover:bg-pink-300 border-2 border-black text-black text-[10px] font-black rounded shadow-sm transition-all cursor-pointer ${
-                            retakeIndex === index
-                              ? "opacity-100 bg-yellow-300"
-                              : "opacity-90 sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40"
-                          }`}
+                {slotItems.map((photo, index) => {
+                  const itemSlot = frameTemplate.slots[index] || activeSlot;
+                  const itemRatio = itemSlot.width / itemSlot.height;
+                  return (
+                    <div
+                      key={photo ? `${index}-${photo.slice(0, 32)}` : `empty-${index}`}
+                      className="relative group rounded-xl border-2 border-black overflow-hidden bg-white shadow-[3px_3px_0px_0px_#000]"
+                      style={{ aspectRatio: itemRatio }}
+                    >
+                      {photo ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={photo}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-full object-cover block"
+                          />
+                          <div className="absolute top-1 left-1 bg-black text-white text-[10px] font-black px-1.5 py-0.5 rounded">
+                            0{index + 1}
+                          </div>
+                          <button
+                            onClick={() => startRetake(index)}
+                            disabled={isCapturing}
+                            className={`absolute inset-x-1 bottom-1 py-1 bg-pink-400 hover:bg-pink-300 border-2 border-black text-black text-[10px] font-black rounded shadow-sm transition-all cursor-pointer ${
+                              retakeIndex === index
+                                ? "opacity-100 bg-yellow-300"
+                                : "opacity-90 sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40"
+                            }`}
+                          >
+                            {retakeIndex === index ? "ĐANG CHỤP..." : "RETAKE"}
+                          </button>
+                        </>
+                      ) : (
+                        <div
+                          className="w-full h-full flex flex-col items-center justify-center bg-pink-50 border-dashed"
                         >
-                          {retakeIndex === index ? "ĐANG CHỤP..." : "RETAKE"}
-                        </button>
-                      </>
-                    ) : (
-                      <div
-                        className="flex flex-col items-center justify-center bg-pink-50 border-dashed"
-                        style={{ aspectRatio: slotRatio }}
-                      >
-                        <span className="font-mono text-[10px] font-black text-zinc-400">
-                          0{index + 1}
-                        </span>
-                        <span className="text-[9px] font-bold text-zinc-400 uppercase">
-                          waiting
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                          <span className="font-mono text-[10px] font-black text-zinc-400">
+                            0{index + 1}
+                          </span>
+                          <span className="text-[9px] font-bold text-zinc-400 uppercase">
+                            waiting
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
