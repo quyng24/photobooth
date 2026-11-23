@@ -1,6 +1,7 @@
 import React from "react";
 import type { FramePreviewProps, DrawCanvasOptions, FrameSlot } from "../types";
 import { formatSignatureLabel } from "@/lib/formatSignatureLabel";
+import { drawPhotoInSlot, PHOTO_BLEED } from "@/lib/drawPhotoInSlot";
 import { SIGNATURE_FONTS } from "@/config/signature";
 
 /**
@@ -56,21 +57,20 @@ export function WeBareBearsFrame({
       {/* 3 PHOTO SLOTS - KÍCH THƯỚC ĐỒNG NHẤT 100% (388 x 250) */}
       {WE_BARE_BEARS_SLOTS.map((slot, index) => {
         const photo = photos[index];
-        const leftPercent = (slot.x / 512) * 100;
-        const topPercent = (slot.y / 1024) * 100;
-        const widthPercent = (slot.width / 512) * 100;
-        const heightPercent = (slot.height / 1024) * 100;
+        const leftPercent = ((slot.x - PHOTO_BLEED) / 512) * 100;
+        const topPercent = ((slot.y - PHOTO_BLEED) / 1024) * 100;
+        const widthPercent = ((slot.width + PHOTO_BLEED * 2) / 512) * 100;
+        const heightPercent = ((slot.height + PHOTO_BLEED * 2) / 1024) * 100;
 
         return (
           <div
             key={index}
-            className="absolute overflow-hidden bg-zinc-200"
+            className="absolute overflow-hidden"
             style={{
               left: `${leftPercent}%`,
               top: `${topPercent}%`,
               width: `${widthPercent}%`,
               height: `${heightPercent}%`,
-              borderRadius: "4%",
             }}
           >
             {photo ? (
@@ -86,7 +86,8 @@ export function WeBareBearsFrame({
                 <span className="text-[9px] uppercase tracking-wider">WAITING</span>
               </div>
             )}
-            <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
+
+            <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-mono px-1 rounded z-6">
               0{index + 1}
             </span>
           </div>
@@ -152,6 +153,8 @@ export async function drawWeBareBearsCanvas(
 
   ctx.save();
   ctx.scale(scale, scale);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   // 1. Vẽ nền kem ấm
   ctx.fillStyle = "#FFFDF8";
@@ -168,37 +171,8 @@ export async function drawWeBareBearsCanvas(
 
     if (!img) continue;
 
-    // Cắt ảnh chuẩn tỉ lệ khung (388 / 250)
-    const imageRatio = img.width / img.height;
-    const targetRatio = slot.width / slot.height;
-    let sx = 0,
-      sy = 0,
-      sw = img.width,
-      sh = img.height;
-
-    if (imageRatio > targetRatio) {
-      sw = img.height * targetRatio;
-      sx = (img.width - sw) / 2;
-    } else {
-      sh = img.width / targetRatio;
-      sy = (img.height - sh) / 2;
-    }
-
-    ctx.save();
-    ctx.filter = filter || "none";
-
-    // Bo góc ảnh mượt mà
-    ctx.beginPath();
-    const r = slot.borderRadius || 16;
-    if (typeof ctx.roundRect === "function") {
-      ctx.roundRect(slot.x, slot.y, slot.width, slot.height, r);
-    } else {
-      ctx.rect(slot.x, slot.y, slot.width, slot.height);
-    }
-    ctx.clip();
-
-    ctx.drawImage(img, sx, sy, sw, sh, slot.x, slot.y, slot.width, slot.height);
-    ctx.restore();
+    // Vẽ ảnh tràn mép (bleed) dưới overlay: không clip/stroke nên mép luôn mịn, không lộ nền
+    drawPhotoInSlot(ctx, img, slot, { filter, scale });
   }
 
   // 3. Phủ khung ảnh overlay We Bare Bears HD lên trên

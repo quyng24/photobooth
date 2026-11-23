@@ -31,13 +31,8 @@ const TIMER_OPTIONS: { value: TimerOption; label: string; desc: string }[] = [
 
 function SetupContent() {
   const searchParams = useSearchParams();
-  const {
-    setCutMode,
-    frameStyle,
-    setFrameStyle,
-    timer,
-    setTimer,
-  } = usePhotoStore();
+  const { setCutMode, frameStyle, setFrameStyle, timer, setTimer } =
+    usePhotoStore();
 
   // Nhận diện param ?frame=... từ trang chủ nếu có
   useEffect(() => {
@@ -83,7 +78,8 @@ function SetupContent() {
           Chọn Khung & Thời Gian
         </h1>
         <p className="text-xs sm:text-sm font-bold text-zinc-600 max-w-md mt-1">
-          Chọn 1 trong 4 mẫu khung ảnh độc quyền và đặt thời gian đếm ngược phù hợp với bạn
+          Chọn 1 trong 4 mẫu khung ảnh độc quyền và đặt thời gian đếm ngược phù
+          hợp với bạn
         </p>
       </div>
 
@@ -97,13 +93,18 @@ function SetupContent() {
             bodyClassName="flex flex-col bg-[#fffbe6] p-5 sm:p-6"
           >
             {/* 1. MẪU KHUNG ẢNH */}
-            <section aria-labelledby="frame-templates-heading" className="w-full mb-6">
+            <section
+              aria-labelledby="frame-templates-heading"
+              className="w-full mb-6"
+            >
               <div className="flex items-center justify-between mb-3.5">
                 <h2
                   id="frame-templates-heading"
                   className="text-sm sm:text-base font-black uppercase tracking-wide flex items-center gap-2 text-black"
                 >
-                  <span>🎨 1. Chọn Mẫu Khung Ảnh ({FRAME_TEMPLATES.length} Mẫu)</span>
+                  <span>
+                    🎨 1. Chọn Mẫu Khung Ảnh ({FRAME_TEMPLATES.length} Mẫu)
+                  </span>
                 </h2>
                 <span className="text-[10px] font-mono font-bold bg-black text-yellow-300 px-2 py-0.5 rounded border border-black shadow-xs">
                   HD 2X READY
@@ -149,7 +150,7 @@ function SetupContent() {
                       </div>
 
                       {/* Thumbnail Preview */}
-                      <div className="relative w-full aspect-[4/5] rounded-xl border-2 border-black bg-white overflow-hidden mb-2.5 flex items-center justify-center shadow-inner">
+                      <div className="relative w-full aspect-4/5 rounded-xl border-2 border-black bg-white overflow-hidden mb-2.5 flex items-center justify-center shadow-inner">
                         {frame.previewImage ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -313,24 +314,36 @@ function SetupContent() {
               <div className="flex items-center gap-2 bg-white p-2.5 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000]">
                 <Sun size={18} className="text-amber-500 shrink-0" />
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-black uppercase">Đủ Sáng</span>
-                  <span className="text-[9px] font-semibold text-zinc-600">Đứng trước đèn</span>
+                  <span className="text-[11px] font-black uppercase">
+                    Đủ Sáng
+                  </span>
+                  <span className="text-[9px] font-semibold text-zinc-600">
+                    Đứng trước đèn
+                  </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 bg-white p-2.5 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000]">
                 <UserCheck size={18} className="text-pink-500 shrink-0" />
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-black uppercase">Đổi Dáng</span>
-                  <span className="text-[9px] font-semibold text-zinc-600">3 kiểu khác nhau</span>
+                  <span className="text-[11px] font-black uppercase">
+                    Đổi Dáng
+                  </span>
+                  <span className="text-[9px] font-semibold text-zinc-600">
+                    3 kiểu khác nhau
+                  </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 bg-white p-2.5 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000]">
                 <RefreshCw size={18} className="text-blue-500 shrink-0" />
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-black uppercase">Retake</span>
-                  <span className="text-[9px] font-semibold text-zinc-600">Chụp lại từng ô</span>
+                  <span className="text-[11px] font-black uppercase">
+                    Retake
+                  </span>
+                  <span className="text-[9px] font-semibold text-zinc-600">
+                    Chụp lại từng ô
+                  </span>
                 </div>
               </div>
             </div>
@@ -358,7 +371,13 @@ export default function SetupPage() {
         />
       </div>
 
-      <Suspense fallback={<div className="p-8 text-center font-bold">Đang tải phòng chụp...</div>}>
+      <Suspense
+        fallback={
+          <div className="p-8 text-center font-bold">
+            Đang tải phòng chụp...
+          </div>
+        }
+      >
         <SetupContent />
       </Suspense>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import type { FramePreviewProps, DrawCanvasOptions, FrameSlot } from "../types";
 import { formatSignatureLabel } from "@/lib/formatSignatureLabel";
+import { drawPhotoInSlot, PHOTO_BLEED } from "@/lib/drawPhotoInSlot";
 import { SIGNATURE_FONTS } from "@/config/signature";
 
 /**
@@ -51,27 +52,26 @@ export function TaekwondoPandaFrame({
 
   return (
     <div
-      className={`relative w-full aspect-[682/1024] rounded-2xl overflow-hidden select-none shadow-[8px_8px_0px_0px_#000] border-3 border-black bg-[#FEFDFB] ${className}`}
+      className={`relative w-full aspect-682/1024 rounded-2xl overflow-hidden select-none shadow-[8px_8px_0px_0px_#000] border-3 border-black bg-[#FEFDFB] ${className}`}
       style={{ backgroundColor: "#FEFDFB", containerType: "inline-size" }}
     >
       {/* 3 PHOTO SLOTS - KÍCH THƯỚC ĐỒNG NHẤT 100% (516 x 260) */}
       {TAEKWONDO_PANDA_SLOTS.map((slot, index) => {
         const photo = photos[index];
-        const leftPercent = (slot.x / 682) * 100;
-        const topPercent = (slot.y / 1024) * 100;
-        const widthPercent = (slot.width / 682) * 100;
-        const heightPercent = (slot.height / 1024) * 100;
+        const leftPercent = ((slot.x - PHOTO_BLEED) / 682) * 100;
+        const topPercent = ((slot.y - PHOTO_BLEED) / 1024) * 100;
+        const widthPercent = ((slot.width + PHOTO_BLEED * 2) / 682) * 100;
+        const heightPercent = ((slot.height + PHOTO_BLEED * 2) / 1024) * 100;
 
         return (
           <div
             key={index}
-            className="absolute overflow-hidden bg-zinc-200"
+            className="absolute overflow-hidden"
             style={{
               left: `${leftPercent}%`,
               top: `${topPercent}%`,
               width: `${widthPercent}%`,
               height: `${heightPercent}%`,
-              borderRadius: "3.2%",
             }}
           >
             {photo ? (
@@ -84,10 +84,13 @@ export function TaekwondoPandaFrame({
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-blue-50 text-blue-900/40 font-mono text-xs font-black">
                 <span>0{index + 1}</span>
-                <span className="text-[9px] uppercase tracking-wider">WAITING</span>
+                <span className="text-[9px] uppercase tracking-wider">
+                  WAITING
+                </span>
               </div>
             )}
-            <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
+
+            <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-mono px-1 rounded z-6">
               0{index + 1}
             </span>
           </div>
@@ -133,7 +136,7 @@ export function TaekwondoPandaFrame({
 export async function drawTaekwondoPandaCanvas(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
-  options: DrawCanvasOptions
+  options: DrawCanvasOptions,
 ) {
   const {
     photos,
@@ -153,6 +156,8 @@ export async function drawTaekwondoPandaCanvas(
 
   ctx.save();
   ctx.scale(scale, scale);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   // 1. Vẽ nền kem sáng
   ctx.fillStyle = "#FEFDFB";
@@ -160,7 +165,7 @@ export async function drawTaekwondoPandaCanvas(
 
   // 2. Vẽ 3 bức ảnh vào 3 ô có kích thước đồng nhất
   const loadedPhotos = await Promise.all(
-    photos.slice(0, 3).map((src) => loadImage(src).catch(() => null))
+    photos.slice(0, 3).map((src) => loadImage(src).catch(() => null)),
   );
 
   for (let i = 0; i < TAEKWONDO_PANDA_SLOTS.length; i++) {
@@ -169,37 +174,8 @@ export async function drawTaekwondoPandaCanvas(
 
     if (!img) continue;
 
-    // Cắt ảnh chuẩn tỉ lệ khung (516 / 260)
-    const imageRatio = img.width / img.height;
-    const targetRatio = slot.width / slot.height;
-    let sx = 0,
-      sy = 0,
-      sw = img.width,
-      sh = img.height;
-
-    if (imageRatio > targetRatio) {
-      sw = img.height * targetRatio;
-      sx = (img.width - sw) / 2;
-    } else {
-      sh = img.width / targetRatio;
-      sy = (img.height - sh) / 2;
-    }
-
-    ctx.save();
-    ctx.filter = filter || "none";
-
-    // Bo góc ảnh mượt mà
-    ctx.beginPath();
-    const r = slot.borderRadius || 16;
-    if (typeof ctx.roundRect === "function") {
-      ctx.roundRect(slot.x, slot.y, slot.width, slot.height, r);
-    } else {
-      ctx.rect(slot.x, slot.y, slot.width, slot.height);
-    }
-    ctx.clip();
-
-    ctx.drawImage(img, sx, sy, sw, sh, slot.x, slot.y, slot.width, slot.height);
-    ctx.restore();
+    // Vẽ ảnh tràn mép (bleed) dưới overlay: không clip/stroke nên mép luôn mịn, không lộ nền
+    drawPhotoInSlot(ctx, img, slot, { filter, scale });
   }
 
   // 3. Phủ khung ảnh overlay Taekwondo Panda HD lên trên
@@ -213,7 +189,11 @@ export async function drawTaekwondoPandaCanvas(
 
   // 4. Vẽ Chữ ký kỷ niệm (Khớp 100% với Live Preview)
   if (customText) {
-    const label = formatSignatureLabel(customText, sticker ?? null, stickerPosition);
+    const label = formatSignatureLabel(
+      customText,
+      sticker ?? null,
+      stickerPosition,
+    );
     ctx.fillStyle = signatureColor || "#181715";
     ctx.font = `900 ${signatureSize}px ${signatureFontFamily || "Arial, Helvetica, sans-serif"}`;
     ctx.textAlign = "right";
