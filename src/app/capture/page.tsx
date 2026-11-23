@@ -52,6 +52,8 @@ export default function CapturePage() {
   const [flash, setFlash] = useState(false);
   const [isMockMode, setIsMockMode] = useState(false);
   const [retakeIndex, setRetakeIndex] = useState<number | null>(null);
+  // Tỉ lệ thật của video camera: khung preview theo đúng tỉ lệ này để vùng gợi ý cắt chính xác
+  const [videoAspect, setVideoAspect] = useState(4 / 3);
 
   const {
     photos,
@@ -65,6 +67,16 @@ export default function CapturePage() {
   const frameTemplate = getFrame(frameStyle);
   const selectedFrame = getFrameConfig(frameStyle);
   const photoCount = frameTemplate.slots.length;
+
+  // Ô ảnh sắp chụp: ảnh sẽ được cắt giữa theo đúng tỉ lệ của ô này khi ghép vào khung
+  const activeSlot =
+    frameTemplate.slots[Math.min(retakeIndex ?? photos.length, photoCount - 1)];
+  const slotRatio = activeSlot.width / activeSlot.height;
+  const GUIDE_SCALE = 0.96;
+  const guideWidthPct =
+    (slotRatio > videoAspect ? 100 : (slotRatio / videoAspect) * 100) * GUIDE_SCALE;
+  const guideHeightPct =
+    (slotRatio > videoAspect ? (videoAspect / slotRatio) * 100 : 100) * GUIDE_SCALE;
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -292,28 +304,19 @@ export default function CapturePage() {
     }
 
     const canvas = document.createElement("canvas");
-    const targetRatio = 4 / 3;
     const vWidth = video.videoWidth || 640;
     const vHeight = video.videoHeight || 480;
-    const videoRatio = vWidth / vHeight;
 
-    let sWidth = vWidth;
-    let sHeight = vHeight;
-    let sx = 0;
-    let sy = 0;
-
-    if (videoRatio > targetRatio) {
-      sWidth = vHeight * targetRatio;
-      sx = (vWidth - sWidth) / 2;
-    } else {
-      sHeight = vWidth / targetRatio;
-      sy = (vHeight - sHeight) / 2;
-    }
-
-    // Giữ độ phân giải gốc của camera (tối đa 1440x1080) để không bị phóng to khi xuất khung HD
-    const outWidth = Math.min(Math.round(sWidth), 1440);
+    // Lưu TOÀN BỘ khung hình camera (không cắt trước). Việc cắt theo tỉ lệ ô ảnh của từng khung
+    // được làm lúc ghép khung (cắt giữa), khớp với vùng gợi ý trên preview và không mất chi tiết
+    // khi đổi sang khung có ô khác tỉ lệ (ngang / vuông).
+    const sx = 0;
+    const sy = 0;
+    const sWidth = vWidth;
+    const sHeight = vHeight;
+    const outWidth = Math.min(vWidth, 1920);
     canvas.width = outWidth;
-    canvas.height = Math.round(outWidth / targetRatio);
+    canvas.height = Math.round((outWidth * vHeight) / vWidth);
 
     const ctx = canvas.getContext("2d");
     if (!ctx) {
@@ -653,7 +656,9 @@ export default function CapturePage() {
             </div>
           </div>
 
-          <div className="relative mb-3 flex w-full max-w-xl mx-auto items-center justify-center overflow-hidden rounded-2xl border-4 border-black bg-black shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)] aspect-4/3">
+          <div className="relative mb-3 flex w-full max-w-xl mx-auto items-center justify-center overflow-hidden rounded-2xl border-4 border-black bg-black shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)]"
+            style={{ aspectRatio: videoAspect }}
+          >
             <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/20 z-20">
               <div
                 className={`w-3 h-3 rounded-full ${
@@ -700,7 +705,11 @@ export default function CapturePage() {
               </button>
             )}
 
-            <div className="absolute inset-4 border-2 border-white/30 pointer-events-none z-10">
+            {/* Vùng ảnh sẽ lọt vào ô của khung: phần tối bên ngoài sẽ bị cắt bỏ */}
+            <div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border-2 border-white/40 pointer-events-none z-10 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
+              style={{ width: `${guideWidthPct}%`, height: `${guideHeightPct}%` }}
+            >
               <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white" />
               <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white" />
               <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-white" />
@@ -712,7 +721,15 @@ export default function CapturePage() {
               autoPlay
               playsInline
               muted
-              className={`w-full h-full object-cover scale-x-[-1] z-0 ${
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget;
+                if (v.videoWidth && v.videoHeight) setVideoAspect(v.videoWidth / v.videoHeight);
+              }}
+              onResize={(e) => {
+                const v = e.currentTarget;
+                if (v.videoWidth && v.videoHeight) setVideoAspect(v.videoWidth / v.videoHeight);
+              }}
+              className={`w-full h-full object-cover z-0 ${
                 facingMode === "user" ? "scale-x-[-1]" : ""
               } ${
                 cameraStatus === "ready" && !isMockMode ? "block" : "hidden"
@@ -768,7 +785,8 @@ export default function CapturePage() {
                         <img
                           src={photo}
                           alt={`Photo ${index + 1}`}
-                          className="w-full aspect-4/3 object-cover block"
+                          className="w-full object-cover block"
+                          style={{ aspectRatio: slotRatio }}
                         />
                         <div className="absolute top-1 left-1 bg-black text-white text-[10px] font-black px-1.5 py-0.5 rounded">
                           0{index + 1}
@@ -786,7 +804,10 @@ export default function CapturePage() {
                         </button>
                       </>
                     ) : (
-                      <div className="aspect-4/3 flex flex-col items-center justify-center bg-pink-50 border-dashed">
+                      <div
+                        className="flex flex-col items-center justify-center bg-pink-50 border-dashed"
+                        style={{ aspectRatio: slotRatio }}
+                      >
                         <span className="font-mono text-[10px] font-black text-zinc-400">
                           0{index + 1}
                         </span>
