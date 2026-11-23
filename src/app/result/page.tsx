@@ -113,7 +113,7 @@ export default function ResultPage() {
           />
         </div>
 
-         {/* MAIN LAYOUT */}
+        {/* MAIN LAYOUT */}
         <div className="flex w-full flex-col items-center justify-center gap-10 lg:flex-row lg:items-start lg:gap-16">
           <div className="relative flex flex-col items-center shrink-0 w-full lg:w-1/2 justify-center mt-4">
             {finalImage ? (
@@ -127,13 +127,14 @@ export default function ResultPage() {
                   fill="currentColor"
                 />
 
-                <div className="relative bg-pink-100 p-4 sm:p-5 rounded-2xl border-4 border-black shadow-[8px_8px_0px_0px_#000] transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 z-10">
-                  <div className="bg-white p-2 rounded-xl border-2 border-black shadow-inner">
+                <div className="relative bg-pink-100 p-4 sm:p-5 rounded-2xl border-4 border-black shadow-[8px_8px_0px_0px_#000] transform -rotate-2 group-hover:rotate-0 transition-transform duration-300 z-10 will-change-transform backface-hidden">
+                  <div className="bg-pink-100 rounded-xl border-2 border-black overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={finalImage}
                       alt="Final Photo Booth"
-                      className="block h-auto max-h-[65vh] w-64 rounded-lg object-contain sm:w-72"
+                      className="block h-auto max-h-[65vh] w-64 object-contain sm:w-72"
+                      style={{ imageRendering: "auto" }}
                     />
                   </div>
                   <div className="text-center mt-4">

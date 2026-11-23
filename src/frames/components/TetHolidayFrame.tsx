@@ -1,6 +1,7 @@
 import React from "react";
 import type { FramePreviewProps, DrawCanvasOptions, FrameSlot } from "../types";
 import { formatSignatureLabel } from "@/lib/formatSignatureLabel";
+import { drawPhotoInSlot, PHOTO_BLEED } from "@/lib/drawPhotoInSlot";
 import { SIGNATURE_FONTS } from "@/config/signature";
 
 /**
@@ -51,27 +52,26 @@ export function TetHolidayFrame({
 
   return (
     <div
-      className={`relative w-full aspect-[571/1024] rounded-2xl overflow-hidden select-none shadow-[8px_8px_0px_0px_#000] border-3 border-black bg-[#FDF6E2] ${className}`}
+      className={`relative w-full aspect-571/1024 rounded-2xl overflow-hidden select-none shadow-[8px_8px_0px_0px_#000] border-3 border-black bg-[#FDF6E2] ${className}`}
       style={{ backgroundColor: "#FDF6E2", containerType: "inline-size" }}
     >
       {/* 3 PHOTO SLOTS */}
       {TET_HOLIDAY_SLOTS.map((slot, index) => {
         const photo = photos[index];
-        const leftPercent = (slot.x / 571) * 100;
-        const topPercent = (slot.y / 1024) * 100;
-        const widthPercent = (slot.width / 571) * 100;
-        const heightPercent = (slot.height / 1024) * 100;
+        const leftPercent = ((slot.x - PHOTO_BLEED) / 571) * 100;
+        const topPercent = ((slot.y - PHOTO_BLEED) / 1024) * 100;
+        const widthPercent = ((slot.width + PHOTO_BLEED * 2) / 571) * 100;
+        const heightPercent = ((slot.height + PHOTO_BLEED * 2) / 1024) * 100;
 
         return (
           <div
             key={index}
-            className="absolute overflow-hidden bg-zinc-200"
+            className="absolute overflow-hidden"
             style={{
               left: `${leftPercent}%`,
               top: `${topPercent}%`,
               width: `${widthPercent}%`,
               height: `${heightPercent}%`,
-              borderRadius: "1%",
             }}
           >
             {photo ? (
@@ -84,10 +84,13 @@ export function TetHolidayFrame({
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center bg-amber-50 text-amber-900/40 font-mono text-xs font-black">
                 <span>0{index + 1}</span>
-                <span className="text-[9px] uppercase tracking-wider">WAITING</span>
+                <span className="text-[9px] uppercase tracking-wider">
+                  WAITING
+                </span>
               </div>
             )}
-            <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-mono px-1 rounded">
+
+            <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[9px] font-mono px-1 rounded z-6">
               0{index + 1}
             </span>
           </div>
@@ -133,7 +136,7 @@ export function TetHolidayFrame({
 export async function drawTetHolidayCanvas(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
-  options: DrawCanvasOptions
+  options: DrawCanvasOptions,
 ) {
   const {
     photos,
@@ -153,6 +156,8 @@ export async function drawTetHolidayCanvas(
 
   ctx.save();
   ctx.scale(scale, scale);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   // 1. Vẽ nền kem ấm truyền thống
   ctx.fillStyle = "#FDF6E2";
@@ -160,7 +165,7 @@ export async function drawTetHolidayCanvas(
 
   // 2. Vẽ 3 bức ảnh vào 3 ô
   const loadedPhotos = await Promise.all(
-    photos.slice(0, 3).map((src) => loadImage(src).catch(() => null))
+    photos.slice(0, 3).map((src) => loadImage(src).catch(() => null)),
   );
 
   for (let i = 0; i < TET_HOLIDAY_SLOTS.length; i++) {
@@ -169,36 +174,8 @@ export async function drawTetHolidayCanvas(
 
     if (!img) continue;
 
-    const imageRatio = img.width / img.height;
-    const targetRatio = slot.width / slot.height;
-    let sx = 0,
-      sy = 0,
-      sw = img.width,
-      sh = img.height;
-
-    if (imageRatio > targetRatio) {
-      sw = img.height * targetRatio;
-      sx = (img.width - sw) / 2;
-    } else {
-      sh = img.width / targetRatio;
-      sy = (img.height - sh) / 2;
-    }
-
-    ctx.save();
-    ctx.filter = filter || "none";
-
-    // Bo góc ảnh nhẹ nhàng khớp viền tranh
-    ctx.beginPath();
-    const r = slot.borderRadius || 2;
-    if (typeof ctx.roundRect === "function") {
-      ctx.roundRect(slot.x, slot.y, slot.width, slot.height, r);
-    } else {
-      ctx.rect(slot.x, slot.y, slot.width, slot.height);
-    }
-    ctx.clip();
-
-    ctx.drawImage(img, sx, sy, sw, sh, slot.x, slot.y, slot.width, slot.height);
-    ctx.restore();
+    // Vẽ ảnh tràn mép (bleed) dưới overlay: không clip/stroke nên mép luôn mịn, không lộ nền
+    drawPhotoInSlot(ctx, img, slot, { filter, scale });
   }
 
   // 3. Phủ khung ảnh overlay Tết Cổ Truyền HD lên trên
@@ -212,7 +189,11 @@ export async function drawTetHolidayCanvas(
 
   // 4. Vẽ Chữ ký kỷ niệm (Khớp 100% với Live Preview)
   if (customText) {
-    const label = formatSignatureLabel(customText, sticker ?? null, stickerPosition);
+    const label = formatSignatureLabel(
+      customText,
+      sticker ?? null,
+      stickerPosition,
+    );
     ctx.fillStyle = signatureColor || "#B91C1C";
     ctx.font = `900 ${signatureSize}px ${signatureFontFamily || "Arial, Helvetica, sans-serif"}`;
     ctx.textAlign = "center";

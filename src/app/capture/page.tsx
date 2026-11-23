@@ -129,8 +129,8 @@ export default function CapturePage() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: mode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
         },
         audio: false,
       });
@@ -310,13 +310,17 @@ export default function CapturePage() {
       sy = (vHeight - sHeight) / 2;
     }
 
-    canvas.width = 960;
-    canvas.height = 720;
+    // Giữ độ phân giải gốc của camera (tối đa 1440x1080) để không bị phóng to khi xuất khung HD
+    const outWidth = Math.min(Math.round(sWidth), 1440);
+    canvas.width = outWidth;
+    canvas.height = Math.round(outWidth / targetRatio);
 
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       throw new Error("Không thể tạo Canvas context.");
     }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
     // Mirror image horizontally to match preview
     if(facingMode === "user") {
@@ -336,7 +340,7 @@ export default function CapturePage() {
       canvas.height
     );
 
-    return canvas.toDataURL("image/jpeg", 0.92);
+    return canvas.toDataURL("image/jpeg", 0.95);
   }, [isMockMode, facingMode]);
 
   const sleep = (ms: number) =>
